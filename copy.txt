@@ -1,8 +1,405 @@
+from xgboost.spark import SparkXGBClassifier
+
+# from pge_custom_model_stages import SparkXGBClassifierModel
+
+from foundry_ml import Model, Stage
+from pyspark.ml.tuning import CrossValidator, ParamGridBuilder
+from pyspark.ml.evaluation import BinaryClassificationEvaluator
+from pyspark.ml.functions import vector_to_array
+from .utils import PREDICTION_YEAR
+
+DEFAULT_TREE_DEPTH = 10
+FAILURE_IND = "failure_ind"  # outage_ind
+# OUTAGE_IND = "outage_ind"
+IGNITION_IND = "ignition_ind"
+FAILURE_YEAR_COL = "tree_year"
+
+
+def create_modeling_dataset(
+    cleaned_time_series_df,
+    failures_with_outage_id,
+    asset_primary_key: str = "TREEID",
+    failure_year_col: str = "year",
+    failure_primary_key: str = "outage_id",
+    # asset_year_col: str = "dataset_year",
+    failure_flag_col: str = "failure_ind",
+    ignition_flag_col: str = "ign_ind",
+):
+    model_df = cleaned_time_series_df.join(
+        failures_with_outage_id, [asset_primary_key, failure_year_col], how="left"
+    )
+    model_df = model_df.drop("HEIGHT", "LINE_NAME")
+    model_df = model_df.withColumn(
+        "failure_flag_col", F.when(F.col("outage_id").isNotNull(), 1).otherwise(0)
+    ).distinct()
+    model_df_2023 = model_df.filter(F.col("year") == 2023)
+    predict_2024 = model_df_2023.withColumn("year", F.lit(2024))
+    predict_2024 = predict_2024.withColumn("failure_flag_col", F.lit(""))
+    model_df = model_df.unionByName(predict_2024)
+    return model_df
+
+
+def get_train_test_predict(
+    model_df,
+    labels_col_name: str = "failure_ind",
+    prediction_year: int = 2024,
+    asset_primary_key: str = "TREEID",
+    train_fraction: float = 0.75,
+):
+    # separate out the prediction dataset (use 2022 for now)
+    predict = model_df.filter(model_df["prediction_year"] == F.lit(prediction_year))
+    model_df = model_df.filter(model_df["prediction_year"] != F.lit(prediction_year))
+    # split train & test sets with statified sampling
+    train = model_df.sampleBy(
+        labels_col_name, fractions={0: train_fraction, 1: train_fraction}, seed=42
+    )
+    test = model_df.join(
+        train, on=[asset_primary_key, "prediction_year"], how="leftanti"
+    )
+
+    return train, test, predict
+
+
+def spark_ml_model_pipeline(
+    assembler,
+    labels_col_name: str = "labelIndex",
+    classifier="random_forest",
+    maxDepth=DEFAULT_TREE_DEPTH,
+    # random forest
+    numTrees=20,
+    minInstancesPerNode=1,
+    weightCol=None,
+    # xgboost
+    num_workers=1,
+    scale_pos_weight=1,
+    eta=0.3,
+    num_round=110,
+    gamma=0,
+    alpha=0,
+    min_child_weight=1,
+    eval_method="auc",
+    # GBT
+    maxIter=20,
+    stepSize=0.3,
+    subsamplingRate=1.0,
+):
+    # model fit
+    # TODO: pass hyperparameters via one dict as an arg
+    random_forest = RandomForestClassifier(
+        labelCol=labels_col_name,
+        featuresCol="features",
+        maxDepth=maxDepth,
+        maxBins=32,
+        minInfoGain=0,
+        numTrees=numTrees,
+        minInstancesPerNode=minInstancesPerNode,
+        subsamplingRate=subsamplingRate,
+        seed=42,
+    )
+    if weightCol != None:
+        random_forest.setWeightCol(weightCol)
+
+    gbt = GBTClassifier(
+        labelCol=labels_col_name,
+        featuresCol="features",
+        maxDepth=maxDepth,
+        maxIter=maxIter,
+        stepSize=stepSize,
+        minInstancesPerNode=minInstancesPerNode,
+        seed=42,
+    )
+
+    logistic_regression = LogisticRegression(
+        featuresCol="features", labelCol=labels_col_name, weightCol="weight"
+    )
+
+    xgboost = SparkXGBClassifier(
+        features_col="features",
+        label_col=labels_col_name,
+        num_workers=num_workers,
+        use_gpu=False,
+        # use to control overfitting
+        max_depth=maxDepth,
+        min_child_weight=min_child_weight,  # default = 1
+        gamma=gamma,  # default = 0
+        reg_alpha=alpha,
+        # other things to control fit
+        scale_pos_weight=scale_pos_weight,  # sum(0 class) / sum(1 class)
+        eta=eta,  # default = 0.3
+        num_round=num_round,  # increase num_round as increase the eta
+        max_delta_step=1,
+        tree_method="hist",  # default="auto" # hist has faster compute times
+        eval_method=eval_method,  # "auc", mean average precision "map" and interpolated area under precision recall curve "aucpr"
+        num_early_stopping_rounds=5,  # prevents overfitting
+        allow_non_zero_for_missing=True,  # vector assembler needs to have handle_invalid = 'keep'
+        missing=-9999,
+        subsample=subsamplingRate,
+        random_state=42,  # subsampling is non-determinstic so we need to set random state when doing subsampling
+        # objective="binary:logistic",  # best for probabilities, can't set this in spark
+    )
+
+    if classifier == "random_forest":
+        classifier = random_forest
+    elif classifier == "gradient_boost":
+        classifier = gbt
+    elif classifier == "logistic_regression":
+        classifier = logistic_regression
+    elif classifier == "xgboost":
+        classifier = xgboost
+
+    # pipeline to transform and fit or predict
+    pipeline = Pipeline(stages=[assembler.stages[0].model, classifier])
+
+    return pipeline
+
+
+def save_sparkml_stages_as_foundryml_stages(model):
+    # store stages in Foundry_ml
+    vector_assembler = model.stages[-2]
+    clf = model.stages[-1]
+
+    # store feature importances as params
+    clf_stage = Stage(clf)  # , input_column_name='features'
+    if clf_stage.name == "SparkXGBClassifierModel":
+        xgb_params = {}
+        xgb_params["hyperparameters"] = clf._gen_xgb_params_dict()
+        # label feature names
+        feature_names = vector_assembler.getInputCols()
+        bst = clf.get_booster()
+        bst.feature_names = (
+            feature_names  # assign the feature names from the Vector assembler
+        )
+        feature_dict = bst.get_score(importance_type="total_gain")
+        xgb_params["feature_scores_total_gain"] = feature_dict
+        clf_stage._set_params(xgb_params)
+
+    # add into Foundry ml to create model object
+    f_model = Model([Stage(vector_assembler), clf_stage])  # , probability_expand=True
+
+    return f_model
+
+
+def set_stage_params(stage):
+    return
+
+
+def cross_validation_pipeline(
+    assembler,
+    training_data,
+    maxDepth: list = [10, 15, 20, 25, 30],
+    numTrees: list = [20, 50, 100, 120, 140],
+    minInstancesPerNode: list = [1, 2, 4, 6],
+    impurity: list = ["gini", "entropy"],
+    maxIter: list = [5, 10, 20, 25],
+    stepSize: list = [0.1, 0.2, 0.3],
+    labels_col_name: str = "failure_ind",
+    numFolds: int = 5,
+    parallelism: int = 10,
+    optimization_metric: str = "areaUnderPR",  # "areaUnderROC"
+    classifier: str = "random_forest",  # "logistic_regression", "gradient_boost"
+):
+    random_forest = RandomForestClassifier(
+        labelCol="labelIndex", featuresCol="features"
+    )
+
+    gbt = GBTClassifier(labelCol="labelIndex", featuresCol="features")
+
+    logistic_regression = LogisticRegression(
+        featuresCol="features", labelCol="labelIndex", weightCol="weight"
+    )
+
+    if classifier == "random_forest":
+        classifier = random_forest
+    elif classifier == "gradient_boost":
+        classifier = gbt
+    elif classifier == "logistic_regression":
+        classifier = logistic_regression
+
+    pipeline = Pipeline(stages=[assembler.stages[0].model, classifier])
+
+    # Build paramGrid based on type of classifier
+    if type(classifier) is RandomForestClassifier:
+        paramGrid = (
+            ParamGridBuilder()
+            .addGrid(classifier.maxDepth, maxDepth)
+            .addGrid(classifier.numTrees, numTrees)
+            .addGrid(classifier.minInstancesPerNode, minInstancesPerNode)
+            .build()
+        )
+    elif type(classifier) is GBTClassifier:
+        paramGrid = (
+            ParamGridBuilder()
+            .addGrid(classifier.maxDepth, maxDepth)
+            .addGrid(classifier.maxIter, maxIter)
+            .addGrid(classifier.stepSize, stepSize)
+            .addGrid(classifier.minInstancesPerNode, minInstancesPerNode)
+            .addGrid(classifier.impurity, impurity)
+            .build()
+        )
+
+    # TODO: build paramGrid for logistic regression
+
+    cv = CrossValidator(
+        estimator=pipeline,
+        estimatorParamMaps=paramGrid,
+        evaluator=BinaryClassificationEvaluator(labelCol="labelIndex").setMetricName(
+            optimization_metric
+        ),
+        numFolds=numFolds,
+        parallelism=parallelism,
+    )
+
+    return cv
+
+
+def encode_dataset(
+    sdf,
+    categorical_col_names,
+    numeric_col_names,
+    key_asset_attributes,
+    label_col_name=FAILURE_IND,
+    algo_type="classification",
+    output_label_name="labelIndex",
+):
+    """Uses spark ml transformers to one-hot encode categorical features, then outputs a dataset containining encoded
+    values with one column for each categorical feature category.
+
+    Inputs:
+        sdf: spark dataframe of modeling dataset
+        categorical_col_names: a list containing the names of the categorical features in sdf
+        numeric_col_names: a list containing the names of the numeric features in sdf
+        key_asset_attributes: additional non-feature data to include
+
+    Output:
+        encoded_sdf: A spark dataframe with a column for each numeric feature, a column for each categorical feature category,
+            a column of labels, and additional key asset attributes.
+        feature_names: A list of feature names
+    """
+
+    # hasher = FeatureHasher(inputCols=feature_col_names, outputCol="features")
+    # categorical
+    # feature_indexer = [StringIndexer(inputCol=c, outputCol=c+"_indexed", handleInvalid="keep") for c in categorical_col_names]
+    feature_indexer = StringIndexer(
+        inputCols=[c for c in categorical_col_names],
+        outputCols=[c + "_indexed" for c in categorical_col_names],
+        handleInvalid="keep",
+    )
+    # return feature_indexer
+    # one hot encoding
+    # feature_encoder = [OneHotEncoder(inputCol=c+"_indexed", outputCol=c+"_encoded") for c in categorical_col_names]
+    # feature_encoder = OneHotEncoder(
+    #     inputCols=[c + "_indexed" for c in categorical_col_names],
+    #     outputCols=[c + "_encoded" for c in categorical_col_names],
+    #     handleInvalid="keep",
+    # )
+
+    # # vector assembler
+    # encoded_col_names = [c + "_encoded" for c in categorical_col_names]
+    # feature_col_names = numeric_col_names + encoded_col_names
+    # assembler = VectorAssembler(
+    #     inputCols=feature_col_names, outputCol="features", handleInvalid="keep"
+    # )
+
+    # # Only use string indexer on classifier labels
+    # if algo_type == "classification":
+    #     # for the labeled data
+    #     label_indexer = StringIndexer(
+    #         # inputCol=label_col_name, outputCol=output_label_name, handleInvalid="error"
+    #     )
+
+    #     pipeline = Pipeline(
+    #         stages=[feature_indexer, feature_encoder, label_indexer, assembler]
+    #     )
+    # elif algo_type == "regression":
+    #     pipeline = Pipeline(stages=[feature_indexer, feature_encoder, assembler])
+    #     output_label_name = label_col_name
+
+    encoded = feature_indexer.fit(sdf).transform(sdf)
+
+    # # Retrieve feature names from feature vector metadata
+    # feature_names = []
+    # for i in encoded.schema["features"].metadata["ml_attr"]["attrs"]["numeric"]:
+    #     feature_names.append(i["name"])
+    # for i in encoded.schema["features"].metadata["ml_attr"]["attrs"]["binary"]:
+    #     # Remove parentheses, replace spaces and periods with underscore to prevent column name error
+    #     feature_names.append(
+    #         i["name"]
+    #         .replace("(", "")
+    #         .replace(")", "")
+    #         .replace(" ", "_")
+    #         .replace(".", "_")
+    #     )
+
+    # # # Convert sparse feature vector to dataframe. Add key attributes and event labels
+    # f = encoded.withColumn("f", vector_to_array("features")).select(
+    #     key_asset_attributes
+    #     + [F.col("f")[i] for i in range(len(feature_names))]
+    #     + [output_label_name]
+    # )
+
+    # Change column names to feature names. Need to pull key asset attribute names from f since key asset attribute
+    # has a column object inside of it
+    # encoded_sdf = f.toDF(
+    #     *f.schema.names[: len(key_asset_attributes)], *feature_names, output_label_name
+    # )
+
+    # # Create an assembler transformer to convert encoded features into sparse vector
+    assembler = VectorAssembler(
+        inputCols=numeric_col_names + [c + "_indexed" for c in categorical_col_names],
+        outputCol="features",
+        handleInvalid="skip",
+    )
+    encoded_sdf = assembler.transform(encoded)
+    return encoded_sdf, assembler
+
+
+
+# from pyspark.sql import functions as F
+from transforms.api import transform, Input, Output, configure
+from foundry_ml import Model, Stage
+
+# from rada_custom_model_stages import SparkXGBClassifierModel
+from myproject.datasets.utils_model import (
+    # FAILURE_IND,
+    # IGNITION_IND,
+    # FAILURE_YEAR_COL,
+    get_train_test_predict,
+    encode_dataset,
+)
+
+from myproject.datasets.utils import PREDICTION_YEAR
+
+
+@configure(
+    profile=[
+        "GEOSPARK",
+        "NUM_EXECUTORS_32",
+        "EXECUTOR_MEMORY_MEDIUM",
+        "DRIVER_MEMORY_LARGE",
+    ]
+)
+@transform(
+    model_train=Output(
+        "/PG&E/workflow_rada_dev/logic/TxCFO_models/datasets/vegetation/model/train"
+    ),
+    model_test=Output(
+        "/PG&E/workflow_rada_dev/logic/TxCFO_models/datasets/vegetation/model/test"
+    ),
+    model_predict=Output(
+        "/PG&E/workflow_rada_dev/logic/TxCFO_models/datasets/vegetation/model/predict"
+    ),
+    vector_assembler=Output(
+        "/PG&E/workflow_rada_dev/logic/TxCFO_models/datasets/vegetation/model/vector_assembler"
+    ),
+    model_base_dataset=Input(
+        "/PG&E/workflow_rada_dev/logic/TxCFO_models/datasets/vegetation/data_pipeline/model_veg"
+    ),
+)
 def compute(
     model_base_dataset,
     model_train,
-    # model_test,
-    # model_predict,
+    model_test,
+    model_predict,
     vector_assembler,
 ):
     num_features = [
@@ -38,10 +435,10 @@ def compute(
         "projyr",
     ]
     cat_features = [
-        # "TREEID",
-        # "year",
-        # "wkt",
-        # "outage_id",
+        "TREEID",
+        "year",
+        "wkt",
+        "outage_id",
         # "is_in_influence_area",
         # "dtworkdate",
         # "dtinspdate",
@@ -51,16 +448,16 @@ def compute(
         "strimcode",
         "nclearance",
         "trim_type",
-        # "nlatitude",
-        # "nlongitude",
-        # "failure_flag_col",
+        "nlatitude",
+        "nlongitude",
+        "failure_flag_col",
     ]
 
     model_base_dataset = model_base_dataset.dataframe().fillna(
         value=-9999, subset=num_features
     )
     model_base_dataset = model_base_dataset.drop(
-        "is_in_influence_area", "dtworkdate", "dtinspdate", "bvoid", "breadonly"
+        *["is_in_influence_area", "dtworkdate", "dtinspdate", "bvoid", "breadonly"]
     )
 
     encoded_modeling_data, assembler = encode_dataset(
@@ -72,4 +469,22 @@ def compute(
 
     # drop NULL values in numerical features
     encoded_modeling_data = encoded_modeling_data.na.drop(subset=num_features)
+
+    train, test, predict = get_train_test_predict(
+        model_df=encoded_modeling_data,
+        labels_col_name="labelIndex",
+        prediction_year=PREDICTION_YEAR,
+        asset_primary_key="TREEID",
+    )
+
+    model = Model([Stage(assembler)])
+
+    # Save the vector assembler as a foundry model
+    model.save(vector_assembler)
+
+    model_predict.write_dataframe(predict)
+    model_train.write_dataframe(train)
+    model_test.write_dataframe(test)
+
+    return encoded_modeling_data, assembler
 
