@@ -1,0 +1,33 @@
+def encode_dataset(
+    sdf,
+    categorical_col_names,
+    numeric_col_names,
+    key_asset_attributes,
+    label_col_name=FAILURE_IND,
+    algo_type="classification",
+    output_label_name="labelIndex",
+):
+    """Uses spark ml transformers to one-hot encode categorical features, then outputs a dataset containining encoded
+    values with one column for each categorical feature category.
+
+    Inputs:
+        sdf: spark dataframe of modeling dataset
+        categorical_col_names: a list containing the names of the categorical features in sdf
+        numeric_col_names: a list containing the names of the numeric features in sdf
+        key_asset_attributes: additional non-feature data to include
+
+    Output:
+        encoded_sdf: A spark dataframe with a column for each numeric feature, a column for each categorical feature category,
+            a column of labels, and additional key asset attributes.
+        feature_names: A list of feature names
+    """
+
+    # hasher = FeatureHasher(inputCols=feature_col_names, outputCol="features")
+    # categorical
+    # feature_indexer = [StringIndexer(inputCol=c, outputCol=c+"_indexed", handleInvalid="keep") for c in categorical_col_names]
+    feature_indexer = StringIndexer(
+        inputCols=[c for c in categorical_col_names],
+        outputCols=[c + "_indexed" for c in categorical_col_names],
+        handleInvalid="keep",
+    )
+    return feature_indexer
