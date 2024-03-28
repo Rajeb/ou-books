@@ -1,33 +1,75 @@
-def encode_dataset(
-    sdf,
-    categorical_col_names,
-    numeric_col_names,
-    key_asset_attributes,
-    label_col_name=FAILURE_IND,
-    algo_type="classification",
-    output_label_name="labelIndex",
+def compute(
+    model_base_dataset,
+    model_train,
+    # model_test,
+    # model_predict,
+    vector_assembler,
 ):
-    """Uses spark ml transformers to one-hot encode categorical features, then outputs a dataset containining encoded
-    values with one column for each categorical feature category.
+    num_features = [
+        "WIRE_ELEV",
+        "GRND_ELEV",
+        "VOLTAGE",
+        "WIRE_LAT",
+        "WIRE_LON",
+        "X",
+        "Y",
+        "Z",
+        "primary_fall_distance_fraction",
+        "primary_perpendicular_fdf",
+        "primary_perpendicular_s2w",
+        "primary_front_row",
+        "secondary_fall_distance_fraction",
+        "secondary_s2w",
+        "secondary_perpendicular_fdf",
+        "secondary_perpendicular_s2w",
+        "secondary_front_row",
+        "tertiary_fall_distance_fraction",
+        "tertiary_s2w",
+        "tertiary_perpendicular_fdf",
+        "tertiary_perpendicular_s2w",
+        "tertiary_front_row",
+        "actual_lat",
+        "actual_long",
+        "distance_of_tree_to_outage",
+        "angle_to_outage",
+        "tree_count",
+        "weight_fraction",
+        "iparenttreeid",
+        "projyr",
+    ]
+    cat_features = [
+        # "TREEID",
+        # "year",
+        # "wkt",
+        # "outage_id",
+        # "is_in_influence_area",
+        # "dtworkdate",
+        # "dtinspdate",
+        # "bvoid",
+        # "breadonly",
+        "snotification",
+        "strimcode",
+        "nclearance",
+        "trim_type",
+        # "nlatitude",
+        # "nlongitude",
+        # "failure_flag_col",
+    ]
 
-    Inputs:
-        sdf: spark dataframe of modeling dataset
-        categorical_col_names: a list containing the names of the categorical features in sdf
-        numeric_col_names: a list containing the names of the numeric features in sdf
-        key_asset_attributes: additional non-feature data to include
-
-    Output:
-        encoded_sdf: A spark dataframe with a column for each numeric feature, a column for each categorical feature category,
-            a column of labels, and additional key asset attributes.
-        feature_names: A list of feature names
-    """
-
-    # hasher = FeatureHasher(inputCols=feature_col_names, outputCol="features")
-    # categorical
-    # feature_indexer = [StringIndexer(inputCol=c, outputCol=c+"_indexed", handleInvalid="keep") for c in categorical_col_names]
-    feature_indexer = StringIndexer(
-        inputCols=[c for c in categorical_col_names],
-        outputCols=[c + "_indexed" for c in categorical_col_names],
-        handleInvalid="keep",
+    model_base_dataset = model_base_dataset.dataframe().fillna(
+        value=-9999, subset=num_features
     )
-    return feature_indexer
+    model_base_dataset = model_base_dataset.drop(
+        "is_in_influence_area", "dtworkdate", "dtinspdate", "bvoid", "breadonly"
+    )
+
+    encoded_modeling_data, assembler = encode_dataset(
+        model_base_dataset,
+        categorical_col_names=cat_features,
+        numeric_col_names=num_features,
+        key_asset_attributes=None,
+    )
+
+    # drop NULL values in numerical features
+    encoded_modeling_data = encoded_modeling_data.na.drop(subset=num_features)
+
