@@ -792,3 +792,528 @@ W122141564N38290814	2017	666.9915771484375	630.3577270507812	230	38.291030883789
 W122150865N40536170	2017	586.6143188476562	557.0765991210938	230	40.536293029785156	-122.151123046875	6519736	2078640.25	607.6400146484375	POINT (571912.2389 4487616.0572)	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	0
 W119888243N36916141	2017	365.24310302734375	331.2090148925781	230	36.91627502441406	-119.88821411132812	6302002	2217838	346.2900085449219	POINT (777213.8561 4090093.8715)	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	0
 W122167668N37867945	2017	786.0042114257812	737.6041259765625	115	37.86769485473633	-122.16799926757812	6080303.5	2142789.5	788.9400024414062	POINT (573208.0131 4191489.856)	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	0
+
+
+
+
+from matplotlib import pyplot as plt
+from foundry_ml_metrics import MetricSet
+from pyspark.ml.evaluation import BinaryClassificationEvaluator
+from sklearn.metrics import (
+    auc,
+    roc_curve,
+    average_precision_score,
+    precision_recall_curve,
+)
+from sklearn.calibration import calibration_curve
+from pyspark.ml.classification import (
+    RandomForestClassifier,
+    GBTClassifier,
+    LogisticRegression,
+)
+
+# from pyspark.ml.classification import RandomForestClassificationSummary
+# from foundry_ml_sparkml.parameters import get_param
+import numpy as np
+import shap
+from pyspark.sql.types import *
+from pyspark.sql import functions as F, types as T
+from pyspark.ml.stat import Correlation
+import seaborn as sns
+import pandas as pd
+from typing import Iterator
+
+from .utils_predictions import split_probability_vector_col
+
+
+def calculate_metrics_set(
+    ctx,
+    foundry_model_pipeline,
+    train_or_test_data,
+    plot_feature_importance: bool = True,
+    print_correlation_matrix: bool = True,
+    weightCol: bool = None,
+    shap_sample_fraction: float = 1.0,
+    rawPredictionCol: str = "probability_1",
+    labels_to_evaluate="failure_flag_col",  # "outage_ind"
+):
+    # initialize MetricSet
+    metric_set = MetricSet(
+        model=foundry_model_pipeline,
+        input_data=train_or_test_data,
+    )
+
+    # run the pipeline
+    train_or_test_data = train_or_test_data.dataframe()
+
+    # Feature column will exist when evaluating calibration model
+    # Need to drop feature column so that a new one can be made by the calibration model pipeline vector assembler
+    if "features" in train_or_test_data.columns:
+        train_or_test_data = train_or_test_data.drop("features")
+
+    model_predictions_to_evaluate = foundry_model_pipeline.transform(train_or_test_data)
+
+    # extract basic info about the model from the Foundry stages
+    feature_names = foundry_model_pipeline.stages[0].hyperparameters["inputCols"]
+    clf = foundry_model_pipeline.stages[1].model
+    model_type = foundry_model_pipeline.stages[1].name
+
+    if (model_type == "SparkXGBClassifierModel") & (
+        "probability_1" not in model_predictions_to_evaluate.columns
+    ):
+        # split the probability
+        model_predictions_to_evaluate = split_probability_vector_col(
+            model_predictions_to_evaluate
+        )
+
+    # calculate auc and pr for each outcome
+    for labelCol in labels_to_evaluate:
+        metric_set = compute_label_specific_metrics(
+            metric_set,
+            model_predictions_to_evaluate,
+            rawPredictionCol,
+            labelCol,
+            weightCol,
+        )
+
+    if model_type in ["SparkXGBClassifierModel"]:
+        # label feature names
+        bst = clf.get_booster()
+        bst.feature_names = (
+            feature_names  # assign the feature names from the Vector assembler
+        )
+
+        # plot the basic feature importance
+        scorer = "weight"
+        feature_dict = bst.get_score(importance_type=scorer)
+        feature_scores = list(feature_dict.values())
+        scorer_feature_names = list(feature_dict.keys())
+        plt = plot_feature_scores(
+            ctx,
+            feature_names=scorer_feature_names,
+            feature_scores=feature_scores,
+            score_label=scorer,
+        )
+        plt.show()
+        metric_set.add(name="Feature Importance" + " " + scorer, value=plt.gcf())
+        plt.close()
+
+        # plot the basic feature importance
+        scorer = "gain"
+        feature_dict = bst.get_score(importance_type=scorer)
+        feature_scores = list(feature_dict.values())
+        scorer_feature_names = list(feature_dict.keys())
+        plt = plot_feature_scores(
+            ctx,
+            feature_names=scorer_feature_names,
+            feature_scores=feature_scores,
+            score_label=scorer,
+        )
+        plt.show()
+        metric_set.add(name="Feature Importance" + " " + scorer, value=plt.gcf())
+        plt.close()
+
+        # plot the basic feature importance
+        scorer = "total_gain"
+        feature_dict = bst.get_score(importance_type=scorer)
+        feature_scores = list(feature_dict.values())
+        scorer_feature_names = list(feature_dict.keys())
+        plt = plot_feature_scores(
+            ctx,
+            feature_names=scorer_feature_names,
+            feature_scores=feature_scores,
+            score_label=scorer,
+        )
+        plt.show()
+        metric_set.add(name="Feature Importance" + " " + scorer, value=plt.gcf())
+        plt.close()
+
+        if plot_feature_importance:
+            # how to get the shap plots to work?
+            shap_values, X = get_shap_values(
+                sdf=train_or_test_data,
+                clf=bst,
+                feature_names=feature_names,
+                model_type=model_type,
+                sample_fraction=shap_sample_fraction,
+            )
+            plt.figure(figsize=[10, 10])
+            shap.summary_plot(shap_values, feature_names=feature_names, plot_type="bar")
+            plt.tight_layout()
+            plt.show()
+            metric_set.add(name="SHAP Summary", value=plt.gcf())
+            plt.close
+            # add Shapley beeswarm
+            plt.figure(figsize=[10, 10])
+            shap.summary_plot(
+                shap_values,
+                X,
+                feature_names=feature_names,
+            )
+            plt.tight_layout()
+            plt.show()
+            metric_set.add(name="SHAP Beeswarm", value=plt.gcf())
+            plt.close
+            del (shap_values, X)
+
+    elif model_type in ["RandomForestClassificationModel", "GBTClassificationModel"]:
+        feature_scores = clf.featureImportances.toArray()
+        feature_scores = feature_scores.tolist()
+        # plot the basic feature importance
+        scorer = "Gini"
+        plt = plot_feature_scores(
+            ctx,
+            feature_names=feature_names,
+            feature_scores=feature_scores,
+            score_label=scorer,
+        )
+        plt.show()
+        metric_set.add(name="Feature Importance", value=plt.gcf())
+        plt.close()
+        if plot_feature_importance:
+            # calculate shap values and plot feature importance (mean absolute shap value)
+            shap_values = get_shap_values(
+                sdf=train_or_test_data,
+                clf=clf,
+                feature_names=feature_names,
+                model_type=model_type,
+            )
+            plt.figure(figsize=[10, 10])
+            shap.summary_plot(shap_values, feature_names=feature_names, plot_type="bar")
+            del shap_values
+            plt.tight_layout()
+            plt.show()
+            metric_set.add(name="SHAP Summary", value=plt.gcf())
+            plt.close
+
+    elif model_type == "LogisticRegressionModel":
+        feature_scores = clf.coefficients.tolist()
+        scorer = "Logistic Regression Coefficients"
+        plt = plot_feature_scores(
+            ctx,
+            feature_names=feature_names,
+            feature_scores=feature_scores,
+            score_label=scorer,
+        )
+        plt.show()
+        metric_set.add(name="Feature Importance", value=plt.gcf())
+        plt.close()
+
+    # plot the failure events counts by year in a table
+    plt = plot_event_data_profile(train_or_test_data)
+    plt.show()
+    metric_set.add(name="Event Count", value=plt.gcf())
+    plt.close
+
+    if print_correlation_matrix:
+        plt = plot_correlation_matrix(
+            train_or_test_data, foundry_model_pipeline.stages[0].model
+        )
+        plt.show()
+        metric_set.add(name="Correlation Matrix", value=plt.gcf())
+        plt.close
+
+    return metric_set, model_predictions_to_evaluate
+
+
+def compute_label_specific_metrics(
+    metric_set, model_predictions_to_evaluate, rawPredictionCol, labelCol, weightCol
+):
+    # method using spark ml
+    evaluator = BinaryClassificationEvaluator(
+        rawPredictionCol=rawPredictionCol,
+        labelCol=labelCol,
+    )
+    if weightCol != None:
+        evaluator.setWeightCol(weightCol)
+    # auc
+    area_under_roc_curve = evaluator.setMetricName("areaUnderROC").evaluate(
+        model_predictions_to_evaluate
+    )
+    metric_set.add(name=labelCol + " AUC - ROC", value=area_under_roc_curve)
+    # auc
+    if "hftd" in model_predictions_to_evaluate.columns:
+        area_under_roc_curve = evaluator.setMetricName("areaUnderROC").evaluate(
+            model_predictions_to_evaluate.filter(F.col("hftd").isNotNull())
+        )
+        metric_set.add(name=labelCol + " HFTD: AUC - ROC", value=area_under_roc_curve)
+    # mAP
+    area_under_pr_curve = evaluator.setMetricName("areaUnderPR").evaluate(
+        model_predictions_to_evaluate
+    )
+    metric_set.add(name=labelCol + " AUC - PR (mAP)", value=area_under_pr_curve)
+    if "hftd" in model_predictions_to_evaluate.columns:
+        area_under_pr_curve = evaluator.setMetricName("areaUnderPR").evaluate(
+            model_predictions_to_evaluate.filter(F.col("hftd").isNotNull())
+        )
+        metric_set.add(
+            name=labelCol + " HFTD: AUC - PR (mAP)", value=area_under_pr_curve
+        )
+
+    # collect predicted probability and labels into vectors for scikitlearn metrics
+    # TODO: compute metrics by threshold with sparkml and foundry_ml when packages mature
+    predicted_probability = (
+        model_predictions_to_evaluate.select(rawPredictionCol).rdd.keys().collect()
+    )
+    labels = model_predictions_to_evaluate.select(labelCol).rdd.keys().collect()
+
+    # get auc curve values over thresholds
+    fpr, tpr, thresholds = roc_curve(labels, predicted_probability, pos_label=1)
+    # auc roc curve
+    roc_auc = auc(fpr, tpr)  # check that scikit-learn returns same auc roc as sparkml
+    plt = plot_roc_auc_curve(
+        fpr=fpr,
+        tpr=tpr,
+        roc_auc=roc_auc,
+        title=labelCol + " Receiver operating characteristic",
+    )
+    plt.show()
+    metric_set.add(name=labelCol + " ROC AUC Curve", value=plt.gcf())
+    plt.close
+
+    # calculate precision and recall over thresholds
+    precision, recall, thresholds = precision_recall_curve(
+        labels, predicted_probability, pos_label=1
+    )
+    # precision recall curve
+    ap_score = average_precision_score(labels, predicted_probability)
+    plt = plot_precision_recall_curve(
+        precision=precision,
+        recall=recall,
+        average_precision=ap_score,
+        title=labelCol + " Precision Recall Curve",
+    )
+    plt.show()
+    metric_set.add(name=labelCol + " Precision Recall Curve", value=plt.gcf())
+    plt.close
+
+    # plot the calibration curve
+    plt = plot_calibration_curve(labels, predicted_probability)
+    plt.show()
+    metric_set.add(name=labelCol + " Calibration Curve", value=plt.gcf())
+    plt.close()
+    return metric_set
+
+
+def plot_roc_auc_curve(
+    fpr, tpr, roc_auc, title: str = "Receiver operating characteristic"
+):
+    plt.figure(figsize=[10, 10])
+    lw = 2
+    plt.plot(
+        fpr, tpr, color="darkorange", lw=lw, label="ROC curve (area = %0.2f)" % roc_auc
+    )
+    plt.plot([0, 1], [0, 1], color="navy", lw=lw, linestyle="--")
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel("False Positive Rate", fontsize=16)
+    plt.ylabel("True Positive Rate", fontsize=16)
+    plt.title(title, fontsize=20)
+    plt.legend(loc="lower right", fontsize=20)
+    return plt
+
+
+def plot_precision_recall_curve(
+    precision, recall, average_precision, title: str = "Precision Recall Curve"
+):
+    plt.figure(figsize=[10, 10])
+    lw = 2
+    plt.plot(
+        recall,
+        precision,
+        color="darkorange",
+        lw=lw,
+        label="Average Precision = %0.4f)" % average_precision,
+    )
+    plt.xlabel("Recall", fontsize=16)
+    plt.ylabel("Precision", fontsize=16)
+    plt.title(title, fontsize=20)
+    plt.legend(loc="upper right", fontsize=20)
+    return plt
+
+
+def plot_event_data_profile(train_or_test_data):
+    fig, ax = plt.subplots()
+    fig.patch.set_visible(False)
+    ax.axis("off")
+    ax.axis("tight")
+
+    plt.table(
+        cellText=(
+            train_or_test_data.groupBy("prediction_year")
+            .agg(
+                F.count(F.when(F.col("labelIndex") == 1, True)).alias("failure_count"),
+                # F.count(F.when(F.col("ignition_ind") == 1, True)).alias(
+                #     "ignition_count"
+                # ),
+            )
+            .orderBy("prediction_year")
+            .select("failure_count")
+            .collect()
+        ),
+        rowLabels=train_or_test_data.select("prediction_year")
+        .distinct()
+        .sort("prediction_year")
+        .rdd.flatMap(lambda x: x)
+        .collect(),  # List of prediction years
+        colLabels="failure_count",
+        loc="center",
+    )
+    plt.tight_layout()
+    plt.title("Count of events per year", fontsize=20)
+    return plt
+
+
+def plot_feature_scores(
+    ctx,
+    feature_names: list,
+    feature_scores: list,
+    title: str = "Feature Importance",
+    score_label: str = "Gini",
+):
+    """
+    Plot feature importance scores.
+    """
+    # sort the features based on the score
+    sdf = ctx.spark_session.createDataFrame(
+        data=zip(feature_names, feature_scores),
+        schema=["feature_names", "feature_scores"],
+    ).sort("feature_scores", ascending=True)
+    # convert to spark 1-D arrays for input to non-spark functions
+    feature_names = sdf.select("feature_names").rdd.keys().collect()
+    feature_scores = sdf.select("feature_scores").rdd.keys().collect()
+
+    # plot the feature importance dataframe
+    plt.figure(figsize=[10, 15])
+    plt.barh(feature_names, feature_scores, color="tab:blue")
+    # plt.xlabel(score_label, fontsize=16)
+    # plt.ylabel("", fontsize=16)
+    plt.title(score_label + " " + title, fontsize=20)
+    plt.tight_layout()
+    return plt
+
+
+def get_shap_values(
+    sdf,
+    clf,
+    feature_names: list,
+    sample_fraction: float,
+    model_type: str = "RandomForestClassificationModel",
+):
+    # get spark dataframe of features
+    features = sdf.select(*feature_names).sample(
+        withReplacement=False, fraction=sample_fraction
+    )
+    # get shap explainer
+    explainer = shap.TreeExplainer(clf, feature_perturbation="tree_path_dependent")
+    # get the shap values
+    X = np.array(features.rdd.collect())
+    shap_values = explainer.shap_values(X, check_additivity=False)
+
+    if model_type == "RandomForestClassificationModel":
+        shap_values = shap_values[0]
+    return shap_values, X
+
+
+def save_correlation_matrix(sdf, assembler, spark):
+    feature_vector = assembler.transform(sdf).select("features")
+
+    # Compute the correlation matrix
+    corr = (
+        Correlation.corr(feature_vector, "features", "spearman")
+        .collect()[0][0]
+        .toArray()
+    )
+
+    corr_sdf = spark.createDataFrame(
+        corr.tolist(), assembler.stages[0].model.getInputCols()
+    )
+
+    return corr_sdf
+
+
+def plot_correlation_matrix(sdf, assembler):
+    feature_vector = assembler.transform(sdf).select("features")
+
+    # Compute the correlation matrix
+    corr = (
+        Correlation.corr(feature_vector, "features", "spearman")
+        .collect()[0][0]
+        .toArray()
+    )
+
+    # Generate a mask for the upper triangle
+    mask = np.triu(np.ones_like(corr, dtype=bool))
+
+    # Set up the matplotlib figure
+    fig, ax = plt.subplots()
+    plt.figure(figsize=[13, 10])
+
+    # Generate a custom diverging colormap
+    cmap = sns.diverging_palette(230, 20, as_cmap=True)
+
+    # Draw the heatmap with the mask and correct aspect ratio
+    sns.heatmap(
+        corr,
+        mask=mask,
+        cmap=cmap,
+        vmax=0.3,
+        center=0,
+        square=True,
+        linewidths=0.5,
+        cbar_kws={"shrink": 0.5},
+        xticklabels=assembler.getInputCols(),
+        yticklabels=assembler.getInputCols(),
+    )
+    plt.tight_layout()
+    return plt
+
+
+def plot_calibration_curve(labels, predicted_probability):
+    prob_true, prob_pred = calibration_curve(
+        labels, predicted_probability, n_bins=10, normalize=True
+    )
+
+    # Set up the matplotlib figure
+    plt.figure(figsize=[13, 10])
+
+    # Plot perfectly calibrated
+    plt.plot([0, 1], [0, 1], linestyle="--", label="Ideally Calibrated")
+
+    # Plot model's calibration curve
+    plt.plot(prob_pred, prob_true, marker=".", label="Classifier")
+
+    leg = plt.legend(loc="upper left")
+    plt.xlabel("Average Predicted Probability in each bin")
+    plt.ylabel("Ratio of positives")
+
+    return plt
+
+
+def get_shap_values_for_predictions(foundry_model, prediction):
+    feature_names = foundry_model.stages[0].hyperparameters["inputCols"]
+
+    bst = foundry_model.stages[-1].model.get_booster()
+    bst.feature_names = (
+        feature_names  # assign the feature names from the Vector assembler
+    )
+
+    # get shap explainer
+    explainer = shap.TreeExplainer(bst, feature_perturbation="tree_path_dependent")
+
+    def calculate_shap(iterator: Iterator[pd.DataFrame]) -> Iterator[pd.DataFrame]:
+        for X in iterator:
+            yield pd.DataFrame(
+                explainer.shap_values(np.array(X), check_additivity=False),
+                columns=feature_names,
+            )
+
+    return_schema = T.StructType()
+    for feature in feature_names:
+        return_schema = return_schema.add(T.StructField(feature, T.FloatType()))
+
+    shap_values = prediction.select(feature_names).mapInPandas(
+        calculate_shap, schema=return_schema
+    )
+
+    return shap_values
