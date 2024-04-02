@@ -1317,3 +1317,8 @@ def get_shap_values_for_predictions(foundry_model, prediction):
     )
 
     return shap_values
+
+
+
+pyspark.errors.exceptions.captured.AnalysisException: [UNRESOLVED_COLUMN.WITH_SUGGESTION] A column or function parameter with name `f` cannot be resolved. Did you mean one of the following? [`features`, `prediction`, `probability_0`, `probability_1`, `probability_2`].;
+'Project ['f]
