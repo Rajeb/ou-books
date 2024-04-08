@@ -1,4 +1,36 @@
-https://topline.co1.qualtrics.com/jfe/form/SV_0wTbYdHb9M0Mmwe?Q_DL=5pTJin5kIM6p0NM_0wTbYdHb9M0Mmwe_CGC_ukuP7NID8JNJgRZ&Q_CHL=email
+################################
+ef model_evaluate(
+    ctx,
+    model_fit,
+    test,
+    evaluation_test,
+    test_predictions,
+    train,
+    evaluation_train,
+    train_predictions,
+):
+    # load model
+    foundry_model = Model.load(model_fit)
+
+    # calculate metrics on out of sample test set
+    metric_set, test_predict = calculate_metrics_set(
+        ctx,
+        foundry_model,
+        test,
+        plot_feature_importance=True,
+        labels_to_evaluate=["failure_flag_col"],
+    )
+    metric_set.save(evaluation_test)
+    test_predictions.write_dataframe(test_predict)
+    # del (metric_set, test_predict, test)
+
+    # calculate metrics on train set
+    metric_set, train_predict = calculate_metrics_set(
+        ctx, foundry_model, train, plot_feature_importance=False
+    )
+    metric_set.save(evaluation_train)
+    train_predictions.write_dataframe(train_predict)
+####################################################################################################
 from xgboost.spark import SparkXGBClassifier
 
 # from pge_custom_model_stages import SparkXGBClassifierModel
