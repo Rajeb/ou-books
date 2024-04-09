@@ -1,12 +1,4 @@
-File "/app/work-dir/__python_runtime_environment__/__SYMLINKS__/site-packages/py4j/protocol.py", line 326, in get_return_value
-    raise Py4JJavaError(
-py4j.protocol.Py4JJavaError: An error occurred while calling z:org.apache.spark.api.python.PythonRDD.collectAndServe.
-: org.apache.spark.SparkException: Job aborted due to stage failure: Could not recover from a failed barrier ResultStage. Most recent failure reason: Stage failed because barrier task ResultTask(10, 0) finished unsuccessfully.
-java.net.SocketException: Connection reset
-	at java.base/sun.nio.ch.NioSocketImpl.implRead(NioSocketImpl.java:328)
-def fit_model(train, model_output, vector_assembler):
-    train = train.dataframe()
-    train = train.na.drop()
+
 
     # load model
     vector_assembler = Model.load(vector_assembler)
