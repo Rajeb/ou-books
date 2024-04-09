@@ -1,3 +1,28 @@
+
+def fit_model(train, model_output, vector_assembler):
+    train = train.dataframe()
+    train = train.na.drop()
+
+    # load model
+    vector_assembler = Model.load(vector_assembler)
+    # create the modeling pipeline (vector assembler -> classifier)
+    pipeline = spark_ml_model_pipeline(
+        assembler=vector_assembler,
+        labels_col_name="labelIndex",
+        classifier="xgboost",
+        maxDepth=HYPERPARAMETERS["maxDepth"],
+        numTrees=HYPERPARAMETERS["numTrees"],
+        minInstancesPerNode=HYPERPARAMETERS["minInstancesPerNode"],
+        scale_pos_weight=1,  # sum(0 class) / sum(1 class) = 3000
+        eta=0.12,
+        num_round=110,
+        gamma=10,
+        alpha=3,
+        min_child_weight=1,
+        subsamplingRate=1,  # 1
+    )
+
+
 ################################
 ef model_evaluate(
     ctx,
