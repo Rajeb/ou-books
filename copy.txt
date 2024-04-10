@@ -1,4 +1,21 @@
+   encoded_modeling_data, assembler = encode_dataset(
+        model_base_dataset,
+        categorical_col_names=cat_features,
+        numeric_col_names=num_features,
+        key_asset_attributes=key_asset_attributes,
+        label_col_name="failure_flag_col",
+    )
 
+    # # drop NULL values in numerical features
+    encoded_modeling_data = encoded_modeling_data.na.drop(subset=num_features)
+    # encoded_modeling_data = encoded_modeling_data.na.drop(subset=cat_features)
+    train, test, predict = get_train_test_predict(
+        model_df=encoded_modeling_data,
+        labels_col_name="labelIndex",
+        prediction_year=2024,
+        asset_primary_key="TREEID",
+    )
+----------------------------------------------------------------------------------------------------------
 def compute(
     model_base_dataset,
     model_train,
