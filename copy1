@@ -10,7 +10,7 @@ def start():
     return transforms
 
 
-ef add_geometry_parquet_transforms(transforms, fs_dataset, output_path, submodel_prediction_file_path):
+def add_geometry_parquet_transforms(transforms, fs_dataset, output_path, submodel_prediction_file_path):
     @configure_geospatial()
     @transform(
         out_dataset=Output(output_path),
