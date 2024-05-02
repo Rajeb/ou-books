@@ -1,0 +1,10 @@
+def start():
+    transforms = []
+    raster_files = constants.RASTER_FILES
+
+    for raster_file in raster_files:
+        raster_file_output = constants.RASTER_OUTPUT_BASE_PATH.format(f"{raster_file}")
+        raster_file_path = f"production/spatial_data/{raster_file}.tif.parquet"
+        transforms = add_geometry_parquet_transforms(transforms, constants.RASTER_INPUT_SOURCE, raster_file_output, raster_file_path)
+    
+    return transforms
