@@ -8,3 +8,28 @@ def start():
         transforms = add_geometry_parquet_transforms(transforms, constants.RASTER_INPUT_SOURCE, raster_file_output, raster_file_path)
     
     return transforms
+
+
+ef add_geometry_parquet_transforms(transforms, fs_dataset, output_path, submodel_prediction_file_path):
+    @configure_geospatial()
+    @transform(
+        out_dataset=Output(output_path),
+        input_dataset=Input(fs_dataset)
+    ) 
+    def convert_to_dataset(input_dataset, out_dataset, ctx):
+        fs = input_dataset.filesystem()
+        hadoop_path = fs.hadoop_path
+        file_list = list(fs.ls())
+        paths = [hadoop_path + '/' + f.path for f in file_list]
+        for i in paths:
+            if submodel_prediction_file_path in i:
+               fileT = [i, ]
+               df = ctx.spark_session.read.parquet(*fileT)
+               SedonaRegistrator.registerAll(ctx.spark_session)
+               df = df.withColumn('geometry', ST.geom_from_wkt('geometry_wkt'))
+               df = df.withColumn('geometry', ST.as_geo_json('geometry'))                
+               out_dataset.write_dataframe(df)
+
+    transforms.append(convert_to_dataset)
+    return transforms
+
