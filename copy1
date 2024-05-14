@@ -1,4 +1,23 @@
+def extract_raster_file(dataset_path, raster_filename):
+    # Construct the full path to the raster file within the dataset
+    full_path = os.path.join(dataset_path, raster_filename)
 
+    # Check if the raster file exists
+    if not os.path.isfile(full_path):
+        raise FileNotFoundError(f"Raster file '{raster_filename}' not found in the dataset.")
+
+    # Open the raster file using rasterio
+    with rasterio.open(full_path) as src:
+        # Read the raster data
+        raster_data = src.read(1)  # Assuming you want to read the first band
+
+        # Create a temporary file to save the raster data
+        tmp = tempfile.NamedTemporaryFile(suffix='.tif', delete=False)
+        with rasterio.open(tmp.name, 'w', driver='GTiff', width=src.width, height=src.height, count=1,
+                           dtype=raster_data.dtype, crs=src.crs, transform=src.transform) as dst:
+            dst.write(raster_data, 1)  # Write the raster data to the temporary file
+
+        return tmp.name
     def extract_raster_file(ds, glob_filename):
         fs = ds.filesystem()
 
