@@ -1,3 +1,32 @@
+
+    def extract_raster_file(ds, glob_filename):
+        fs = ds.filesystem()
+
+        files = list(fs.ls(glob=glob_filename))
+        print(files)
+        fname = files[0][0]
+        print(fname)
+
+        tmp = tempfile.NamedTemporaryFile()
+        with fs.open(fname, "rb") as f:
+            shutil.copyfileobj(f, tmp)
+            tmp.flush()
+
+        return tmp
+#  rasterfile_raw = u.extract_raster_file(ds_raw, rastername)
+
+    raster_file_veg = extract_raster_file(dead_tree_img, 'Dead_tree_canopy_cover_3m/California-Vegetation-DeadTreeCover-2018-fall-00003m.tif'
+        )
+
+
+
+
+
+
+
+
+
+
 def start():
     transforms = []
     raster_files = constants.RASTER_FILES
