@@ -1,3 +1,52 @@
+import rasterio
+import geopandas as gpd
+from rasterio.windows import Window
+from shapely.geometry import box
+
+# Path to the raster file
+raster_file = "path_to_your_raster_file.tif"
+
+# Initialize an empty GeoDataFrame to store the results
+gdf_list = []
+
+# Specify the desired window size
+window_size = 512  # Adjust this value according to your memory constraints
+
+# Read the raster file
+with rasterio.open(raster_file) as src:
+    # Iterate over the raster dataset with fixed window size
+    for col_off in range(0, src.width, window_size):
+        for row_off in range(0, src.height, window_size):
+            # Define the window
+            window = Window(col_off, row_off, window_size, window_size)
+            
+            # Read data for the current window
+            data = src.read(1, window=window)
+            
+            # Calculate the bounding box coordinates of the window
+            transform = src.window_transform(window)
+            xmin = transform.c + col_off * transform.a
+            ymax = transform.f + row_off * transform.e
+            xmax = xmin + window_size * transform.a
+            ymin = ymax - window_size * transform.e
+            
+            # Create a bounding box geometry
+            bbox = box(xmin, ymin, xmax, ymax)
+            
+            # Create a GeoDataFrame for the current window
+            gdf = gpd.GeoDataFrame({'value': data.flatten()}, geometry=[bbox])
+            
+            # Append the GeoDataFrame to the list
+            gdf_list.append(gdf)
+
+# Concatenate all GeoDataFrames into a single GeoDataFrame
+final_gdf = gpd.GeoDataFrame(pd.concat(gdf_list, ignore_index=True))
+
+# Plot the final GeoDataFrame
+final_gdf.plot(column='value', cmap='viridis', legend=True)
+
+
+
 def extract_raster_file(dataset_path, raster_filename):
     # Construct the full path to the raster file within the dataset
     full_path = os.path.join(dataset_path, raster_filename)
