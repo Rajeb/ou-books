@@ -1,0 +1,96 @@
+def encode_dataset(
+    sdf,
+    categorical_col_names,
+    numeric_col_names,
+    key_asset_attributes,
+    label_col_name=FAILURE_IND,
+    algo_type="classification",
+    output_label_name="labelIndex",
+):
+    """Uses spark ml transformers to one-hot encode categorical features, then outputs a dataset containining encoded
+    values with one column for each categorical feature category.
+
+    Inputs:
+        sdf: spark dataframe of modeling dataset
+        categorical_col_names: a list containing the names of the categorical features in sdf
+        numeric_col_names: a list containing the names of the numeric features in sdf
+        key_asset_attributes: additional non-feature data to include
+
+    Output:
+        encoded_sdf: A spark dataframe with a column for each numeric feature, a column for each categorical feature category,
+            a column of labels, and additional key asset attributes.
+        feature_names: A list of feature names
+    """
+
+    # hasher = FeatureHasher(inputCols=feature_col_names, outputCol="features")
+    # categorical
+    # feature_indexer = [StringIndexer(inputCol=c, outputCol=c+"_indexed", handleInvalid="keep") for c in categorical_col_names]
+    feature_indexer = StringIndexer(
+        inputCols=[c for c in categorical_col_names],
+        outputCols=[c + "_indexed" for c in categorical_col_names],
+        handleInvalid="keep",
+    )
+    # one hot encoding
+    # feature_encoder = [OneHotEncoder(inputCol=c+"_indexed", outputCol=c+"_encoded") for c in categorical_col_names]
+    feature_encoder = OneHotEncoder(
+        inputCols=[c + "_indexed" for c in categorical_col_names],
+        outputCols=[c + "_encoded" for c in categorical_col_names],
+        handleInvalid="keep",
+    )
+
+    # vector assembler
+    encoded_col_names = [c + "_encoded" for c in categorical_col_names]
+    feature_col_names = numeric_col_names + encoded_col_names
+    assembler = VectorAssembler(
+        inputCols=feature_col_names, outputCol="features", handleInvalid="keep"
+    )
+
+    # Only use string indexer on classifier labels
+    if algo_type == "classification":
+        # for the labeled data
+        label_indexer = StringIndexer(
+            inputCol=label_col_name, outputCol=output_label_name, handleInvalid="error"
+        )
+
+        pipeline = Pipeline(
+            stages=[feature_indexer, feature_encoder, label_indexer, assembler]
+        )
+    elif algo_type == "regression":
+        pipeline = Pipeline(stages=[feature_indexer, feature_encoder, assembler])
+        output_label_name = label_col_name
+
+    encoded = pipeline.fit(sdf).transform(sdf)
+
+    # # Retrieve feature names from feature vector metadata
+    feature_names = []
+    for i in encoded.schema["features"].metadata["ml_attr"]["attrs"]["numeric"]:
+        feature_names.append(i["name"])
+    for i in encoded.schema["features"].metadata["ml_attr"]["attrs"]["binary"]:
+        # Remove parentheses, replace spaces and periods with underscore to prevent column name error
+        feature_names.append(
+            i["name"]
+            .replace("(", "")
+            .replace(")", "")
+            .replace(" ", "_")
+            .replace(".", "_")
+        )
+
+    # # Convert sparse feature vector to dataframe. Add key attributes and event labels
+    f = encoded.withColumn("f", vector_to_array("features")).select(
+        key_asset_attributes
+        + [F.col("f")[i] for i in range(len(feature_names))]
+        + [output_label_name]
+    )
+
+    # Change column names to feature names. Need to pull key asset attribute names from f since key asset attribute
+    # has a column object inside of it
+    encoded_sdf = f.toDF(
+        *f.schema.names[: len(key_asset_attributes)], *feature_names, output_label_name
+    )
+
+    # Create an assembler transformer to convert encoded features into sparse vector
+    assembler = VectorAssembler(
+        inputCols=feature_names, outputCol="features", handleInvalid="skip"
+    )
+
+    return encoded_sdf, assembler
