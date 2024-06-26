@@ -1,42 +1,6 @@
-@configure(
-    ["GEOSPARK", "NUM_EXECUTORS_32", "EXECUTOR_MEMORY_LARGE", "DRIVER_MEMORY_EXTRA_EXTRA_LARGE"])
-@transform(
-    out=Output("/PG&E/workflow_rada_dev/data/raw/weather_data/tm_2018_3000tile"), 
-    raw=Input("ri.foundry.main.dataset.97795179-835d-4ab3-8d03-e8ba16ebba53") ,
-    # raw=Input("ri.foundry.main.dataset.ddfaf810-a341-4a9b-bc98-5ec0d1b3ec63"),
-)
-def compute(ctx, out, raw):    
-    SedonaRegistrator.registerAll(ctx.spark_session)
-
-    # config = SedonaContext.builder(). \
-    #     config('spark.jars.packages',
-    #         'org.apache.sedona:sedona-spark-3.4_2.12:1.5.1,'
-    #         'org.datasyslab:geotools-wrapper:1.5.1-28.2'). \
-    #     getOrCreate()
-    # sedona = SedonaContext.create(config)
-    fs = raw.filesystem()
-    hadoop_path = fs.hadoop_path
-    file_list = list(fs.ls())
-    print(file_list)
-    paths = [hadoop_path + "/" + f.path for f in file_list]
-    # file_name = "production/output/dpd_equipment_cause/ignition_probability_prediction_data.parquet"
-    # file_name = "production/fpi_v3_filled_nodata/fpi_v3_filled_nodata_2015-2021_ws_mph_summer_group_gt_pct.tif"
-    # file_name = 'production/tif_template/template-100m.tif'
-    # file_name = 'production/raster/Dead_tree_canopy_cover_3m/California-Vegetation-DeadTreeCover-2018-fall-00003m.tif'
-    # file_name = 'raster/CA_Vegetation/5000_tiles'
-    file_name = 'CA_Vegetation/2000_tiles/tile'
-    # file_name = 'raster/tiff_template_tiles/tile'
-    # file_name = 'production/tif_template/template-100m.tif'
- 
-    files = filter(lambda k: file_name in k.path, list(fs.ls()))
-   
-    paths = [hadoop_path + "/" + f.path for f in files ]
-    
-    df = ctx.spark_session.read.format("binaryFile").option("readFromCRS", "EPSG:32610").option("readToCRS", "EPSG:32610").load(paths)    
-    
-    df = df.withColumn("raster", F.expr("RS_FromGeoTiff(content)"))  
-    
-    # df = df .select(F.expr("RS_TileExplode(RS_FromGeoTiff(content), 3000, 3000)") ) 
-    df = df.withColumn("exploded", F.expr("RS_PixelAsPolygons(raster, 1)"))
-    # df = df.withColumn("exploded", F.expr("RS_PixelAsCentroids(raster,1)"))
-    print(df)
+df = df.withColumn('tile', F.split('path', '/'))\
+           .withColumn('tile', F.col('tile')[F.size('tile') -1])
+    df = df.withColumn('tilexy', F.split('tile', '\.'))\
+           .withColumn('tilexy', F.col('tilexy')[F.size('tilexy') -2]) 
+    df = df.withColumn('tile_y', F.split('tilexy', '\_')).withColumn('tile_y', F.col('tile_y')[2]) 
+    df = df.withColumn('tile_x', F.split('tilexy', '\_')).withColumn('tile_x', F.col('tile_x')[1]) 
