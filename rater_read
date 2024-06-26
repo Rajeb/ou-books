@@ -1,6 +1,17 @@
-df = df.withColumn('tile', F.split('path', '/'))\
-           .withColumn('tile', F.col('tile')[F.size('tile') -1])
-    df = df.withColumn('tilexy', F.split('tile', '\.'))\
-           .withColumn('tilexy', F.col('tilexy')[F.size('tilexy') -2]) 
-    df = df.withColumn('tile_y', F.split('tilexy', '\_')).withColumn('tile_y', F.col('tile_y')[2]) 
-    df = df.withColumn('tile_x', F.split('tilexy', '\_')).withColumn('tile_x', F.col('tile_x')[1]) 
+ df = df.select(df.tile_x,df.tile_y, df.tile,F.explode(df.exploded))
+    df = df.select("tile_x","tile_y", "tile",df["col.geom"].alias("geom"), df["col.value"].alias("value"), df["col.x"].alias("x"), df["col.y"].alias("y"))
+    
+    df = df.withColumn("geometry", F.expr("ST_AsText(geom)"))
+    # df = df.withColumn("x_pt", F.expr("ST_XMax(geom)"))
+    # df = df.withColumn("y_pt", F.expr("ST_YMax(geom)"))
+
+    df = df.withColumn('row', df.tile_y + df.y).withColumn('row', F.col("row").cast(IntegerType()))    
+    df = df.withColumn('col', df.tile_x + df.x).withColumn('col', F.col("col").cast(IntegerType()))
+    
+    df = df.withColumn("pk_row_col", F.concat(F.col('row'),F.lit('_'), F.col('col')))
+    # df = df.filter(df.value!='-9999')
+    df = df.drop('geom')
+    # df = df.withColumn('env', F.expr("ST_AsText(env)"))
+    # df = df.select('tilexy','meta', 'env')
+    out.write_dataframe(df)
+
