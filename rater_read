@@ -14,4 +14,13 @@
     # df = df.withColumn('env', F.expr("ST_AsText(env)"))
     # df = df.select('tilexy','meta', 'env')
     out.write_dataframe(df)
+#Spatial join and aggregation
+joined_df = df1.alias("df1").join(df2.alias("df2"), expr("ST_Intersects(df1.geom, df2.geom)")) \
+    .groupBy("df1.treeid") \
+    .agg(avg("df2.value").alias("avg_value"),
+         min("df2.value").alias("min_value"),
+         max("df2.value").alias("max_value")) \
+    .select("treeid", "avg_value", "min_value", "max_value")
 
+# Show the result
+joined_df.show()
