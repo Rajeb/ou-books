@@ -18,3 +18,38 @@ queryOverlap = """
     WHERE 
         ST_Intersects(ST_GeomFromWKT(cp.wkt), ST_GeomFromWKT(tm.geometry))
     """
+
+
+----------
+transform(
+    out=Output(
+        "/PG&E/workflow_rada_dev/logic/TxCFO_models/datasets/vegetation/data_pipeline/raster_datasets/test1"
+    ),
+    tree_mortality_df=Input("ri.foundry.main.dataset.04a3e876-bc72-4acd-8fe8-b0815a4422f2"),
+    canopy_data=Input("ri.foundry.main.dataset.86a4958b-bc33-491d-babd-d613dc6991cf")
+)
+def compute(ctx, out, tree_mortality_df, canopy_data):
+    spark = ctx.spark_session
+    SedonaRegistrator.registerAll(spark)
+    canopy_data.registerTempTable("canopy_data")
+    tree_mortality_df.registerTempTable("tree_mortality_df")
+ 
+    queryOverlap = """
+    SELECT
+        cp.TREEID,
+        cp.wkt,
+        tm.geometry as tm_geom,
+        tm.value as mort_per,
+        tm.pk_row_col,
+        AVG(tm.value) as avg_mort_per,
+        ST_Intersection(ST_GeomFromWKT(cp.wkt), ST_GeomFromWKT(tm.geometry)) as intersection
+    FROM
+        canopy_data as cp, 
+        tree_mortality_df as tm
+    WHERE
+        ST_Intersects(ST_GeomFromWKT(cp.wkt), ST_GeomFromWKT(tm.geometry))
+    GROUP BY
+    cp.TREEID
+    """
+    result_df =spark.sql(queryOverlap)
+    out.write_dataframe(result_df)
