@@ -4,3 +4,17 @@
         ST_Intersection(cp.wkt, mt.tm_geom)
         WHERE (ST_Intersects(ST_GeomFromWKT(cp.wkt), ST_GeomFromWKT(mt.tm_geom))
         """
+edited
+queryOverlap = """
+    SELECT 
+        cp.TREEID, 
+        cp.wkt, 
+        tm.geometry as tm_geom, 
+        tm.value as mort_per, 
+        tm.pk_row_col
+    FROM 
+        canopy_data as cp, 
+        tree_mortality_df as tm
+    WHERE 
+        ST_Intersects(ST_GeomFromWKT(cp.wkt), ST_GeomFromWKT(tm.geometry))
+    """
