@@ -1,0 +1,17 @@
+queryOverlap = """
+        SELECT p.TREEID, p.OBJECTID, p.LINE_NAME, p.HEIGHT, p.idx, p.angle, z.TREEID as matching_TREEID
+        FROM influence_shapes as p, tree_crowns as z
+        ST_Intersection(df_temp['geometry_transformed'], df2_new['pixel_geometry']))\
+                .filter(~ST_IsEmpty("intersection"))
+
+        WHERE (ST_Intersects(ST_GeomFromWKT(p.geom_from_angle_wkt), ST_GeomFromWKT(z.crown_geom_wkt))
+        """
+
+    # joined_df = df2_new.crossJoin(df_temp)\
+    # .withColumn("intersection",
+    #             ST_Intersection(df_temp['geometry_transformed'], df2_new['pixel_geometry']))\
+    #             .filter(~ST_IsEmpty("intersection"))
+    # # calculate average value
+    # average_df = joined_df.groupby("TREEID").agg({"value": "avg"}).withColumnRenamed("avg(value)", "average_value")
+
+    out.write_dataframe(queryOverlap)
