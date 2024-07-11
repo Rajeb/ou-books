@@ -1,4 +1,7 @@
- queryOverlap = """
+https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2020JD033180
+
+
+queryOverlap = """
         SELECT p.TREEID,p.wkt,tm.geometry as tm_geom, tm.value as mort_per, tm.pk_row_col
         FROM canopy_data as cp, tree_mortality_df as tm
         ST_Intersection(cp.wkt, mt.tm_geom)
