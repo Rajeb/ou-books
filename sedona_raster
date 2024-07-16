@@ -1,4 +1,11 @@
 
+url = “https://yb8oqn9m7d.internal.us-west-2.ss.pge.com/rating_on_fia_startdate/v1”
+api_key = " ciMlnk2Bmp3rMDXtItRw24hVKPLySKmq8asLBYEb "
+header = {"x-api-key": api_key}
+response = requests.get(url=url, headers=header, verify=False)
+fia_data = response.json()
+print (fia_data)
+
 ############Climate data
 def create_geometry(df, geometry_field):
     df = df.withColumn("geom", ST_GeomFromGeoJSON(geometry_field))
