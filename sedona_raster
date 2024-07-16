@@ -1,12 +1,4 @@
-try:
-    response = requests.get(url=url, headers=headers, verify=False)
-
-    # Check if the request was successful (status code 200)
-    if response.status_code == 200:
-        fia_data = response.json()
-        print(fia_data)
-    else:
-        print(f"Failed to retrieve data. Status code: {response.status_code}")
+url ="https://yb8oqn9m7d.internal.us-west-2.ss.pge.com/rating_on_fia_startdate/v1?start_date=20240715"
 
 except requests.exceptions.RequestException as e:
     print(f"Error encountered: {e}")
