@@ -1,3 +1,10 @@
+2024-07-15
+0	{'fia': '100', 'rating': 'R2'}
+1	{'fia': '105', 'rating': 'R2'}
+2	{'fia': '112', 'rating': 'R4'}
+3	{'fia': '113', 'rating': 'R3'}
+4	{'fia': '115', 'rating': 'R3'}
+
 url ="https://yb8oqn9m7d.internal.us-west-2.ss.pge.com/rating_on_fia_startdate/v1?start_date=20240715"
 
 except requests.exceptions.RequestException as e:
