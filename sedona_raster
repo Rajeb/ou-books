@@ -10,7 +10,26 @@ def create_geometry(df, geometry_field):
     df = df.withColumn("geometry", ST_AsText("geom"))
     return df
 
-
+def create_geometry(df, geometry_field):
+    # Convert GeoJSON strings to geometries
+    df['geometry'] = df[geometry_field].apply(lambda x: shape(x))
+    
+    # Create a GeoDataFrame
+    gdf = gpd.GeoDataFrame(df, geometry='geometry')
+    
+    # Set the original CRS
+    gdf.set_crs(epsg=4326, inplace=True)
+    
+    # Filter valid geometries
+    gdf = gdf[gdf.is_valid]
+    
+    # Transform to a new CRS (EPSG:32610)
+    gdf = gdf.to_crs(epsg=32610)
+    
+    # Convert geometries to WKT
+    gdf['geometry'] = gdf['geometry'].apply(lambda geom: geom.wkt)
+    
+    return pd.DataFrame(gdf)
 
 https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2020JD033180
 https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2023JD039136
