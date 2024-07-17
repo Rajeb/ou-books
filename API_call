@@ -1,0 +1,29 @@
+api_key = "ciMlnk2Bmp3rMDXtItRw24hVKPLySKmq8asLBYEb"
+header = {"x-api-key": api_key}
+
+start_date ="20240701"
+end_date = "20240715"
+dates_range = pd.date_range(start=start_date, end=end_date)
+dfs =[]
+
+try:
+    for date in dates_range:
+        
+        formatted_date = date.strftime("%Y%m%d")
+        print(formatted_date)
+        url = f"{base_url}?start_date={formatted_date}"
+        print(url)
+        response = requests.get(url=url, headers=header, verify=False)
+
+    # Check if the request was successful (status code 200)
+        if response.status_code == 200:
+            fia_data = response.json()
+            # print(fia_data)
+            df = pd.DataFrame.from_dict(fia_data)
+            dfs.append(df)
+        else:
+            print(f"Failed to retrieve data. Status code: {response.status_code}")
+except requests.exceptions.RequestException as e:
+    print(f"Error encountered: {e}")
+    
+combined_df = pd.concat(dfs, ignore_index= True)
