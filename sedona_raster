@@ -1,9 +1,9 @@
-2024-07-15
-0	{'fia': '100', 'rating': 'R2'}
-1	{'fia': '105', 'rating': 'R2'}
-2	{'fia': '112', 'rating': 'R4'}
-3	{'fia': '113', 'rating': 'R3'}
-4	{'fia': '115', 'rating': 'R3'}
+	2024-07-01	2024-07-02	2024-07-03	2024-07-04	2024-07-05	2024-07-06	2024-07-07	2024-07-08	2024-07-09	2024-07-10	2024-07-11	2024-07-12	2024-07-13	2024-07-14	2024-07-15
+0	{'fia': '100', 'rating': 'R1'}	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN
+1	{'fia': '105', 'rating': 'R2'}	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN
+2	{'fia': '112', 'rating': 'R2'}	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN
+3	{'fia': '113', 'rating': 'R1'}	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN
+4	{'fia': '115', 'rating': 'R1'}	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	
 
 url ="https://yb8oqn9m7d.internal.us-west-2.ss.pge.com/rating_on_fia_startdate/v1?start_date=20240715"
 
