@@ -1,13 +1,7 @@
-	normalized_data = []
+Ambiguous self-joins fail in Spark 3
 
-# Iterate over the dictionary
-for date, records in data.items():
-    for record in records:
-        record['date'] = date  # Add the date to each record
-        normalized_data.append(record)
-
-# Create a DataFrame from the normalized data
-df_normalized = pd.DataFrame(normalized_data)
+Message not helpful?
+Column date#76 are ambiguous. It's probably because you joined several Datasets together, and some of these Datasets are the same. This column points to one of the Datasets but Spark is unable to figure out which one. Please alias the Datasets with different names via Dataset.alias before joining them, and specify the column using the qualified name, e.g. df.alias("a").join(df.alias("b"), F.col("a.id") > F.col("b.id")). Please see documentation for more details.
 
 url ="https://yb8oqn9m7d.internal.us-west-2.ss.pge.com/rating_on_fia_startdate/v1?start_date=20240715"
 
