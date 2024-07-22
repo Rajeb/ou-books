@@ -1,0 +1,7 @@
+Extreme Events:
+
+Outliers: Extreme values can skew average calculations, especially in non-normally distributed data. Techniques like trimming or winsorizing can help mitigate this.
+Event Frequency: The distribution affects how extreme events are represented when aggregated. For example, using gamma distribution for precipitation can better capture the frequency of heavy rainfall days compared to a normal distribution.
+Seasonality and Trends:
+
+Recognizing the underlying distribution helps in identifying and adjusting for seasonal patterns and trends. For instance, temperature might follow a sinusoidal pattern annually, while precipitation could be more sporadic.
