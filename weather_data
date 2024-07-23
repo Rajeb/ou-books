@@ -18,3 +18,7 @@ pomms2km_we_sn	day	month	year	smois_0_avg	smois_0_stddev	rh2m_avg	rh2m_stddev	te
 8	100_299	1	1	2023	0.329020	0.003711	78.735832	21.218067	43.372383	4.310484	3.207421	2.347995	10.108923	3.991436	0.530887	0.328142	74.175400	42.002769	2.602644	9.099835	0.530887
 9	100_302	1	1	2023	0.331842	0.003700	76.409210	21.577551	41.702618	4.083037	3.253897	2.285851	12.886290	4.369962	0.539838	0.330742	73.086601	41.029907	2.811944	12.433921	0.539838
 AttributeError: `np.deprecate` was removed in the NumPy 2.0 release. Emit `DeprecationWarning` with `warnings.warn` directly, or use `typing.deprecated`.
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+pymc3 3.11.6 requires numpy<1.22.2,>=1.15.0, but you have numpy 1.22.2 which is incompatible.
+statsmodels 0.14.2 requires numpy>=1.22.3, but you have numpy 1.22.2 which is incompatible.
+statsmodels 0.14.2 requires scipy!=1.9.2,>=1.8, but you have scipy 1.7.3 which is incompatible.
