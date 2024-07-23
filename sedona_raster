@@ -25,8 +25,8 @@ def link_function(ctx, failures, fia_geometry_cleaned):
     queryOverlap = """
         SELECT p.*, z.fia
     #     FROM failures as p, fia_geometry_cleaned as z
-    #     WHERE    
-    """
+    #     WHERE ST_Intersects(p.geom, z.geom)
+return df
 
     intersection_dataframe = ctx.spark_session.sql(queryOverlap)  # noqa
 
