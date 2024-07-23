@@ -1,4 +1,16 @@
 
+def create_geometry(df, geometry_field):
+    df = df.withColumn("geom", ST_GeomFromGeoJSON(geometry_field))
+    df = df.withColumn("valid", ST_IsValid("geom"))
+    df = df.filter(col("valid") == True).drop("valid")
+    df = df.withColumn(
+        "geom", ST_Transform("geom", lit("EPSG:4326"), lit("EPSG:32610"))
+    )
+    df = df.withColumn("geometry", ST_AsText("geom"))
+    return df
+
+
+
 def get_pixel_primary_key(
     spark,
     point_df,
