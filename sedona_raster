@@ -1,3 +1,66 @@
+
+def get_pixel_primary_key(
+    spark,
+    point_df,
+    pixel_df,
+    point_df_primary_keys: list = ["global_id"],
+    point_df_geom_col: str = "geometry",
+    pixel_primary_key: str = "pk_row_col",
+    pixel_geom_col: str = "geometry",
+    include_all_pixel_columns=False,
+):
+    """
+    Label transformers with the pixel primary key so that spatial & weather data can be joined via pixel
+    """
+    # Concatenate the primary keys into a single column called 'combined_pk'
+    combined_txfr_pk = F.concat_ws("_", *point_df_primary_keys).alias("combined_pk")
+
+    # filter to temp dataset to avoid error from Null geometries
+    df_temp = (
+        point_df.filter(F.col(point_df_geom_col).isNotNull())
+        .select(
+            combined_txfr_pk,
+            stc.ST_GeomFromGeoJSON(point_df_geom_col).alias(
+                point_df_geom_col
+            ),  # convert to geometry type
+        )
+        .distinct()
+    )
+
+    # prep the pixel df
+    pixel_df = (
+        pixel_df.filter(F.col(pixel_geom_col).isNotNull())
+        .select(
+            pixel_primary_key,
+            stc.ST_GeomFromGeoJSON(pixel_geom_col).alias("pixel_geometry"),
+        )
+        .distinct()
+    )
+
+    # join with txfr with pixel dataset using indexed & optimized spatial join function
+    df_temp = polygon_contains_point(
+        spark=spark,
+        df_polygons=pixel_df,
+        df_points=df_temp,
+        polygon_geometry="pixel_geometry",
+        point_geometry=point_df_geom_col,
+        max_partitions=64,
+    )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Ambiguous self-joins fail in Spark 3
 
 Message not helpful?
