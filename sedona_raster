@@ -1,4 +1,5 @@
 
+
 def create_geometry(df, geometry_field):
     df = df.withColumn("geom", ST_GeomFromGeoJSON(geometry_field))
     df = df.withColumn("valid", ST_IsValid("geom"))
@@ -9,6 +10,32 @@ def create_geometry(df, geometry_field):
     df = df.withColumn("geometry", ST_AsText("geom"))
     return df
 
+
+
+
+def link_function(ctx, failures, fia_geometry_cleaned):
+    # create geometries
+    failures = create_geometry(failures, "geometry")
+    fia_geometry_cleaned = create_geometry(fia_geometry_cleaned, "geometry")
+
+    # # do intersections
+    failures.registerTempTable("failures")
+    fia_geometry_cleaned.registerTempTable("fia_geometry_cleaned")
+
+    queryOverlap = """
+        SELECT p.*, z.fia
+    #     FROM failures as p, fia_geometry_cleaned as z
+    #     WHERE    
+    """
+
+    intersection_dataframe = ctx.spark_session.sql(queryOverlap)  # noqa
+
+    return intersection_dataframe.drop("geom")
+    
+    # SELECT p.*, z.fia
+    #     FROM failures as p, fia_geometry_cleaned as z
+    #     WHERE ST_Intersects(p.geom, z.geom)
+return df
 
 
 def get_pixel_primary_key(
