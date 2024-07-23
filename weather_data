@@ -22,3 +22,11 @@ ERROR: pip's dependency resolver does not currently take into account all the pa
 pymc3 3.11.6 requires numpy<1.22.2,>=1.15.0, but you have numpy 1.22.2 which is incompatible.
 statsmodels 0.14.2 requires numpy>=1.22.3, but you have numpy 1.22.2 which is incompatible.
 statsmodels 0.14.2 requires scipy!=1.9.2,>=1.8, but you have scipy 1.7.3 which is incompatible.
+
+
+
+
+
+
+
+WARNING (theano.configdefaults): g++ not detected ! Theano will be unable to execute optimized C-implementations (for both CPU and GPU) and will default to Python implementations. Performance will be severely degraded. To remove this warning, set Theano flags cxx to an empty string.
