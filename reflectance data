@@ -7,6 +7,9 @@ for acqdate in metadata.acq_date.unique():
     metadata.loc[metadata.acq_date == acqdate, 'snapshot_date'] = str(following_snap)
 
 
+# Convert dates to datetime objects
+metadata['acq_date'] = pd.to_datetime(metadata['acq_date'])
+avail_snapshots_dates = np.array(pd.to_datetime(avail_snapshots_dates))
 # Ensure 'snapshot_date' is a string column
 metadata['snapshot_date'] = ""
 
