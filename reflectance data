@@ -1,0 +1,7 @@
+metadata['snapshot_date'] = ""
+
+for acqdate in metadata.acq_date.unique():
+    inf = acqdate <= avail_snapshots_dates
+    pos_follow = np.argmax(inf)
+    following_snap = avail_snapshots_dates[pos_follow]
+    metadata.loc[metadata.acq_date == acqdate, 'snapshot_date'] = str(following_snap)
