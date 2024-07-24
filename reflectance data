@@ -5,3 +5,22 @@ for acqdate in metadata.acq_date.unique():
     pos_follow = np.argmax(inf)
     following_snap = avail_snapshots_dates[pos_follow]
     metadata.loc[metadata.acq_date == acqdate, 'snapshot_date'] = str(following_snap)
+
+
+# Ensure 'snapshot_date' is a string column
+metadata['snapshot_date'] = ""
+
+# Convert avail_snapshots_dates to numpy array if it is not already
+avail_snapshots_dates = np.array(avail_snapshots_dates)
+
+# Function to find the next available snapshot date
+def find_next_snapshot(acqdate):
+    inf = avail_snapshots_dates >= acqdate
+    if np.any(inf):
+        pos_follow = np.argmax(inf)
+        return str(avail_snapshots_dates[pos_follow])
+    else:
+        return None  # Handle case where no snapshot date is available
+
+# Apply the function to each acquisition date
+metadata['snapshot_date'] = metadata['acq_date'].apply(find_next_snapshot)
