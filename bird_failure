@@ -1,3 +1,28 @@
+# Customize the primary x-axis and y-axis
+ax1.set_xlabel('Day of Year', fontsize=14)
+ax1.set_ylabel('Cumulative Count', fontsize=14)
+ax1.set_title('Cumulative Bird Strikes per Selected Year by Day', fontsize=20)
+ax1.legend(title='Year', fontsize=10, title_fontsize='12')
+ax1.grid(True)
+
+# Create a secondary x-axis
+ax2 = ax1.secondary_xaxis('top', functions=(lambda x: x, lambda x: x))
+ax2.xaxis.set_major_locator(MonthLocator())
+ax2.xaxis.set_major_formatter(DateFormatter('%b'))
+ax2.set_xlabel('Month', fontsize=14)
+
+plt.tight_layout()
+plt.show()
+
+
+
+
+
+
+
+
+
+
 # Assuming df is your DataFrame
 # Sample data creation (You can replace this with your actual DataFrame)
 data = {'year': np.random.randint(2000, 2012, 100)}
@@ -7,23 +32,7 @@ df = pd.DataFrame(data)
 yearly_counts = df['year'].value_counts().sort_index()
 
 # Create the plot
-plt.figure(figsize=(12, 8))
-plt.plot(yearly_counts.index, yearly_counts.values, color='red', linewidth=2)
-plt.scatter(yearly_counts.index, yearly_counts.values, color='#BFEFFF', s=150, zorder=5)
-for i, txt in enumerate(yearly_counts.values):
-    plt.annotate(txt, (yearly_counts.index[i], yearly_counts.values[i]), fontsize=12, ha='center', va='center', fontweight='bold', color='black')
-
-# Customize the plot
-plt.xticks(ticks=np.arange(2000, 2012), labels=np.arange(2000, 2012), rotation=45, fontsize=20, fontweight='bold', fontfamily='Roboto')
-plt.yticks(fontsize=20, fontweight='bold', fontfamily='Roboto')
-plt.title('Bird Strikes per year', fontsize=40, fontweight='bold', fontfamily='Roboto')
-plt.gca().set_xlim(2000, 2011)
-
-# Hide the legend
-plt.legend().set_visible(False)
-
-plt.tight_layout()
-plt.show()
+plt.figure(fi
 
 
 
