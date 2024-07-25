@@ -1,0 +1,16 @@
+
+# Line plot for bird strikes per year
+df %>%
+count(year, sort = TRUE)%>%
+ggplot(aes(year, n))+
+geom_line(color = "red")+
+geom_point(size = 15, color = "#BFEFFF")+
+geom_text(aes(label = n), size = 6, vjust = 0.5,hjust = 0.5, color = "black", fontface = "bold")+
+scale_x_discrete(limits = c(2000:2011))+
+my_theme()+
+theme(axis.text.x = element_text(size = 20, face = 'bold', angle = 45,family = 'Roboto'))+
+theme(axis.text.y = element_text(size = 20, face = 'bold',family = 'Roboto'))+
+theme(plot.title =  element_text(size = 40, face = 'bold',family = 'Roboto'))+
+theme(plot.subtitle = element_text(size = 30, face = 'bold',family = 'Roboto'))+
+theme(legend.position = "none")+
+labs(title = "Bird Strikes per year")
