@@ -1,3 +1,18 @@
+
+
+r3_failures_hf = r3_ignitions[((r3_ignitions['hftd']==1) | 
+                         (r3_ignitions['hfra_v4_1']==1) | 
+                         (r3_ignitions['hfra_add']==1) )]
+
+
+
+
+
+
+
+
+
+
 fig, axs = plt.subplots(2,2, figsize=(12, 6), tight_layout=True)
 # fig, ax1 = plt.subplots(figsize=(10, 4))
 # plt.title('R3+ ignition to failures by month in HFRA/HFTD')
