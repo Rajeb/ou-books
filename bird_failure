@@ -1,3 +1,68 @@
+fig, axs = plt.subplots(2,2, figsize=(12, 6), tight_layout=True)
+# fig, ax1 = plt.subplots(figsize=(10, 4))
+# plt.title('R3+ ignition to failures by month in HFRA/HFTD')
+selected_years = [2015,2021,2022,2024]
+
+for year in selected_years:
+    f_c = failure_counts[failure_counts['year']==year].groupby('month')['failure_primary_key'].sum().to_dict()
+    i_c = igntions_counts[igntions_counts['year']==year].groupby('month')['ignition_primary_key'].sum().to_dict()
+    outage_to_ignition = []
+    if year != 2024:
+        end_month = 13
+    else:
+        end_month = 8
+    for month in range(1, end_month):
+        if defaultdict(int,f_c)[month] != 0:
+            outage_to_ignition.append(round(defaultdict(int,i_c)[month]/defaultdict(int,f_c)[month],3))
+        else:
+            outage_to_ignition.append(0)
+    axs[0,0].plot([i for i in range(1,end_month)], outage_to_ignition)
+
+fig.suptitle("R3+ ignitions / R3+ failures by month in HFRA/HFTD", fontsize=12)
+axs[0,0].set_ylabel('Ignition to failure ratio', fontsize=10)
+axs[0,0].set_xlabel('month')
+axs[0,0].set_title("All Failure types", fontsize=10)
+axs[0,0].legend(selected_years, loc='upper right', fontsize=9)
+
+
+for year in selected_years:
+    f_c = failure_counts_bird[failure_counts_bird['year']==year].groupby('month')['failure_primary_key'].sum().to_dict()
+    i_c = igntions_counts_bird[igntions_counts_bird['year']==year].groupby('month')['ignition_primary_key'].sum().to_dict()
+    outage_to_ignition = []
+    if year != 2024:
+        end_month = 13
+    else:
+        end_month = 8
+    for month in range(1, end_month):
+        if defaultdict(int,f_c)[month] != 0:
+            outage_to_ignition.append(round(defaultdict(int,i_c)[month]/defaultdict(int,f_c)[month],3))
+        else:
+            outage_to_ignition.append(0)
+    axs[1,0].plot([i for i in range(1,end_month)], outage_to_ignition)
+
+axs[1,0].set_ylabel('Ignition to failure ratio', fontsize=10)
+axs[1,0].set_xlabel('month')
+axs[1,0].set_title("Animal Failure types", fontsize=10)
+axs[1,0].legend(selected_years, loc='upper right', fontsize=9)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Customize the primary x-axis and y-axis
 ax1.set_xlabel('Day of Year', fontsize=14)
 ax1.set_ylabel('Cumulative Count', fontsize=14)
