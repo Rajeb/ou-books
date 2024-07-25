@@ -1,16 +1,26 @@
+# Assuming df is your DataFrame
+# Sample data creation (You can replace this with your actual DataFrame)
+data = {'year': np.random.randint(2000, 2012, 100)}
+df = pd.DataFrame(data)
 
-# Line plot for bird strikes per year
-df %>%
-count(year, sort = TRUE)%>%
-ggplot(aes(year, n))+
-geom_line(color = "red")+
-geom_point(size = 15, color = "#BFEFFF")+
-geom_text(aes(label = n), size = 6, vjust = 0.5,hjust = 0.5, color = "black", fontface = "bold")+
-scale_x_discrete(limits = c(2000:2011))+
-my_theme()+
-theme(axis.text.x = element_text(size = 20, face = 'bold', angle = 45,family = 'Roboto'))+
-theme(axis.text.y = element_text(size = 20, face = 'bold',family = 'Roboto'))+
-theme(plot.title =  element_text(size = 40, face = 'bold',family = 'Roboto'))+
-theme(plot.subtitle = element_text(size = 30, face = 'bold',family = 'Roboto'))+
-theme(legend.position = "none")+
-labs(title = "Bird Strikes per year")
+# Count the occurrences per year
+yearly_counts = df['year'].value_counts().sort_index()
+
+# Create the plot
+plt.figure(figsize=(12, 8))
+plt.plot(yearly_counts.index, yearly_counts.values, color='red', linewidth=2)
+plt.scatter(yearly_counts.index, yearly_counts.values, color='#BFEFFF', s=150, zorder=5)
+for i, txt in enumerate(yearly_counts.values):
+    plt.annotate(txt, (yearly_counts.index[i], yearly_counts.values[i]), fontsize=12, ha='center', va='center', fontweight='bold', color='black')
+
+# Customize the plot
+plt.xticks(ticks=np.arange(2000, 2012), labels=np.arange(2000, 2012), rotation=45, fontsize=20, fontweight='bold', fontfamily='Roboto')
+plt.yticks(fontsize=20, fontweight='bold', fontfamily='Roboto')
+plt.title('Bird Strikes per year', fontsize=40, fontweight='bold', fontfamily='Roboto')
+plt.gca().set_xlim(2000, 2011)
+
+# Hide the legend
+plt.legend().set_visible(False)
+
+plt.tight_layout()
+plt.show()
