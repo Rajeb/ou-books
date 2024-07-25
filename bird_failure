@@ -24,3 +24,45 @@ plt.legend().set_visible(False)
 
 plt.tight_layout()
 plt.show()
+
+
+
+
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Sample data creation (You can replace this with your actual DataFrame)
+np.random.seed(0)
+dates = pd.date_range(start='2000-01-01', end='2011-12-31', freq='D')
+data = {'date': np.random.choice(dates, 1000)}
+df = pd.DataFrame(data)
+
+# Add 'year' and 'day_of_year' columns
+df['date'] = pd.to_datetime(df['date'])
+df['year'] = df['date'].dt.year
+df['day_of_year'] = df['date'].dt.dayofyear
+
+# Group by 'year' and 'day_of_year', then count the occurrences
+daily_counts = df.groupby(['year', 'day_of_year']).size().reset_index(name='count')
+
+# Calculate the cumulative count for each year
+daily_counts['cumulative_count'] = daily_counts.groupby('year')['count'].cumsum()
+
+# Plot the cumulative counts
+plt.figure(figsize=(14, 10))
+
+for year, group in daily_counts.groupby('year'):
+    plt.plot(group['day_of_year'], group['cumulative_count'], label=year)
+
+# Customize the plot
+plt.xlabel('Day of Year', fontsize=14)
+plt.ylabel('Cumulative Count', fontsize=14)
+plt.title('Cumulative Bird Strikes per Year by Day', fontsize=20)
+plt.legend(title='Year', fontsize=10, title_fontsize='12')
+plt.grid(True)
+
+plt.tight_layout()
+plt.show()
+
