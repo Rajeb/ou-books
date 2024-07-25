@@ -29,7 +29,25 @@ def standardize (df, columns):
 
 monthly_agg_std.rename(columns=lambda x: x.replace('_avg', '_stand') if x in col_to_standardize else x, inplace=True)
 
+# Step 2: Standardize the Monthly and Seasonal Averages
+def standardize(df, columns):
+    df_standardized = df.copy()
+    for col in columns:
+        mean = df[col].mean()
+        std = df[col].std()
+        df_standardized[col] = (df[col] - mean) / std
+    return df_standardized
 
+# Identify columns to standardize
+columns_to_standardize = [col for col in monthly_agg.columns if col.endswith('_avg')]
+
+# Standardize the monthly and seasonal average DataFrames
+monthly_agg_std = standardize(monthly_agg, columns_to_standardize)
+seasonal_agg_std = standardize(seasonal_agg, columns_to_standardize)
+
+# Rename columns to indicate they are standardized
+monthly_agg_std.rename(columns=lambda x: x.replace('_avg', '_stand') if x in columns_to_standardize else x, inplace=True)
+seasonal_agg_std.rename(columns=lambda x: x.replace('_avg', '_stand') if x in columns_to_standardize else x, inplace=True)
 
 Extreme Events:
 
