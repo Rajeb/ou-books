@@ -19,9 +19,15 @@ df_with_season = df.withColumn(
 )
 
 
+def standardize (df, columns):
+    df_standardized = df.copy()
+    for col in columns:
+        mean = df[col].mean()
+        std = df[col].std()
+        df_standardized[col]=(df[col]-mean)/std
+    return df_standardized
 
-
-
+monthly_agg_std.rename(columns=lambda x: x.replace('_avg', '_stand') if x in col_to_standardize else x, inplace=True)
 
 
 
