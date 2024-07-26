@@ -81,3 +81,77 @@ statsmodels 0.14.2 requires scipy!=1.9.2,>=1.8, but you have scipy 1.7.3 which i
 
 
 WARNING (theano.configdefaults): g++ not detected ! Theano will be unable to execute optimized C-implementations (for both CPU and GPU) and will default to Python implementations. Performance will be severely degraded. To remove this warning, set Theano flags cxx to an empty string.
+
+############# Plotting
+
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.dates import DateFormatter, MonthLocator
+
+# Sample data creation (You can replace this with your actual DataFrame)
+np.random.seed(0)
+dates = pd.date_range(start='2015-01-01', end='2024-07-15', freq='D')
+data = {
+    'date': np.random.choice(dates, 1000),
+    'outage_record': np.random.randint(1, 100, 1000),
+    'ignition_record': np.random.randint(1, 100, 1000),
+    'cause': np.random.choice(['bird', 'other'], 1000),
+    'temperature': np.random.uniform(10, 35, 1000)
+}
+df = pd.DataFrame(data)
+
+# Filter the DataFrame for the selected years and where cause is 'bird'
+selected_years = [2015, 2022, 2023]
+df['date'] = pd.to_datetime(df['date'])
+df['year'] = df['date'].dt.year
+df['day_of_year'] = df['date'].dt.dayofyear
+bird_data = df[(df['year'].isin(selected_years)) & (df['cause'] == 'bird')]
+
+# Group by 'year' and 'day_of_year', then count the occurrences
+daily_counts = bird_data.groupby(['year', 'day_of_year']).size().reset_index(name='count')
+daily_counts['cumulative_count'] = daily_counts.groupby('year')['count'].cumsum()
+
+# Calculate daily average temperature for each day of the year
+avg_temp = df.groupby('day_of_year')['temperature'].mean().reset_index()
+
+# Create a new column for the date corresponding to the day of the year in a non-leap year
+daily_counts['date'] = pd.to_datetime(daily_counts['day_of_year'], format='%j', errors='coerce')
+avg_temp['date'] = pd.to_datetime(avg_temp['day_of_year'], format='%j', errors='coerce')
+
+# Plot the cumulative counts
+fig, ax1 = plt.subplots(figsize=(14, 10))
+
+for year, group in daily_counts.groupby('year'):
+    ax1.plot(group['date'], group['cumulative_count'], label=year)
+
+# Customize the primary x-axis and y-axis
+ax1.set_xlabel('Day of Year', fontsize=14)
+ax1.set_ylabel('Cumulative Count', fontsize=14)
+ax1.set_title('Cumulative Bird Strikes per Selected Year by Day and Daily Average Temperature', fontsize=20)
+ax1.legend(title='Year', fontsize=10, title_fontsize='12')
+ax1.grid(True)
+
+# Create a secondary y-axis for daily average temperature
+ax2 = ax1.twinx()
+ax2.plot(avg_temp['date'], avg_temp['temperature'], label='Avg Temp', color='red', linewidth=2, linestyle='dashed')
+ax2.set_ylabel('Daily Average Temperature (°C)', fontsize=14)
+
+# Create a secondary x-axis
+ax3 = ax1.secondary_xaxis('top', functions=(lambda x: x, lambda x: x))
+ax3.xaxis.set_major_locator(MonthLocator())
+ax3.xaxis.set_major_formatter(DateFormatter('%b'))
+ax3.set_xlabel('Month', fontsize=14)
+
+plt.tight_layout()
+plt.show()
+
+
+
+
+
+
+
+
+
