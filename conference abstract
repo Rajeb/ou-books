@@ -4,3 +4,10 @@ egetation hazard is one of the top causes of transmission lines power outages in
 Vegetation hazards are a leading cause of power outages in Pacific Gas and Electric (PG&E) transmission grids. To support wildfire mitigation planning, we employed a Maximum Entropy (MaxEnt) model to quantify the risk of transmission grid failures. The model evaluates the expected failure risk based on environmental and asset conditions associated with past vegetation-related outages from 2015-2022. By comparing the statistical distribution of these conditions at outage locations to those along the entire transmission grid, the model identifies high-risk areas.
 
 Data for the model encompasses three categories: (i) asset attributes, (ii) spatially varying environmental conditions by location, and (iii) spatio-temporal weather conditions by location and time. The model undergoes iterative training and testing to determine the most significant covariates and assess predictive performance. Strike tree covariates emerged as dominant, demonstrating strong test performance and effectively highlighting high-risk areas with an AUC (area under the ROC curve) of 0.88. Predictions are produced at a 100m by 100m pixel resolution and are subsequently adapted for use in wildfire mitigation planning units.
+
+
+
+
+Rajen Bajgain is a Data Scientist with PG&E's Electric System Predictive Analytics team, specializing in the development of machine learning models to assess wildfire risk across spatial and temporal scales for transmission lines. 
+He holds a Ph.D. in Ecosystem Ecology from the University of Oklahoma. Rajen's previous work includes developing agro-ecosystem models to address the impacts of climate and management practices on ecosystems, focusing on issues such as drought, evapotranspiration, and crop disease.
+His expertise in both ecosystem ecology and predictive analytics uniquely positions him to contribute to wildfire risk mitigation efforts.
