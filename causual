@@ -6,3 +6,47 @@ from sklearn.preprocessing import StandardScaler
 from dowhy import CausalModel
 import matplotlib.pyplot as plt
 import seaborn as sns
+
+
+
+# Refute the estimate using a placebo treatment
+refutation_placebo = model.refute_estimate(identified_estimand, estimate, method_name="placebo_treatment_refuter")
+print(refutation_placebo)
+
+# Refute the estimate using a random common cause
+refutation_random = model.refute_estimate(identified_estimand, estimate, method_name="random_common_cause")
+print(refutation_random)
+
+# Visualize the estimated causal effects with confidence intervals
+effect_values = [estimate.value] * len(weather_vars)
+lower_bound = estimate.value - 1.96 * estimate.std_err
+upper_bound = estimate.value + 1.96 * estimate.std_err
+
+causal_effects_summary = pd.DataFrame({
+    'Weather Variable': weather_vars,
+    'Estimated Causal Effect': effect_values,
+    'Lower Bound (95% CI)': [lower_bound] * len(weather_vars),
+    'Upper Bound (95% CI)': [upper_bound] * len(weather_vars)
+})
+
+print(causal_effects_summary)
+
+plt.figure(figsize=(10, 6))
+plt.errorbar(causal_effects_summary['Weather Variable'],
+             causal_effects_summary['Estimated Causal Effect'],
+             yerr=[(upper_bound - lower_bound) / 2 for _ in weather_vars], fmt='o', capsize=5)
+plt.axhline(y=0, color='r', linestyle='--')
+plt.xlabel('Weather Variable')
+plt.ylabel('Estimated Causal Effect')
+plt.title('Estimated Causal Effects of Weather Variables on Ignition Events')
+plt.show()
+
+# Visualize the distribution of propensity scores
+plt.figure(figsize=(10, 6))
+sns.histplot(df[df[treatment] == 1]['propensity_score'], color='blue', label='Ignition Event', kde=True, stat="density", linewidth=0)
+sns.histplot(df[df[treatment] == 0]['propensity_score'], color='red', label='No Ignition Event', kde=True, stat="density", linewidth=0, alpha=0.5)
+plt.xlabel('Propensity Score')
+plt.ylabel('Density')
+plt.title('Distribution of Propensity Scores')
+plt.legend()
+plt.show()
