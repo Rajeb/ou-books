@@ -50,3 +50,69 @@ plt.ylabel('Density')
 plt.title('Distribution of Propensity Scores')
 plt.legend()
 plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+..........................
+ef estimate_gps(X, treatment):
+    kde = KernelDensity(kernel='gaussian', bandwidth=0.5)
+    kde.fit(np.hstack([X, treatment.reshape(-1, 1)]))
+    log_density = kde.score_samples(X)
+    return np.exp(log_density)
+
+# Prepare outcome variable
+y = df[outcome].values
+
+# Create DataFrame to store GPS
+gps_df = pd.DataFrame(index=df.index)
+
+for treatment in weather_vars:
+    # Extract treatment and covariates
+    X = df[weather_vars].values
+    treatment_values = df[treatment].values
+
+    # Estimate GPS
+    gps = estimate_gps(X, treatment_values)
+
+    # Add GPS to the DataFrame
+    gps_df[treatment + '_gps'] = gps
+
+    # Include GPS in the regression model
+    X_reg = df[weather_vars].copy()
+    X_reg[treatment + '_gps'] = gps_df[treatment + '_gps']
+    
+    # Fit regression model
+    reg_model = LinearRegression()
+    reg_model.fit(X_reg, y)
+    print(f"Regression coefficients for {treatment}:")
+    print(pd.Series(reg_model.coef_, index=X_reg.columns))
+
+    # Predict the outcome
+    df[f'{treatment}_predicted'] = reg_model.predict(X_reg)
+
+    # Plot the relationship
+    plt.figure(figsize=(12, 6))
+    plt.scatter(df[treatment], y, color='blue', label='Observed Data')
+    plt.plot(df[treatment], df[f'{treatment}_predicted'], color='red', label='Fitted Line', linewidth=2)
+    plt.xlabel(treatment)
+    plt.ylabel('Outcome')
+    plt.title(f'Effect of {treatment} on Ignition Events')
+    plt.legend()
+    plt.show()
+
+# Visualize the distribution of GPS for one of the weather variables
+plt.figure(figsize=(10, 6))
+plt.hist(gps_df[weather_vars[0] + '_gps'], bins=30, edgecolor='k', alpha=0.7)
+plt.xlabel('Generalized Propensity Score')
+plt.ylabel('Frequency')
+plt.title(f'Distribution of Generalized Propensity Scores for {weather_vars[0]}')
+plt.show()
