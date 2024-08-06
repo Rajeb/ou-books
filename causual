@@ -1,3 +1,53 @@
+
+Example: import numpy as np
+import pandas as pd
+import networkx as nx
+import matplotlib.pyplot as plt
+import statsmodels.api as sm
+
+# Generate synthetic data
+np.random.seed(42)
+n = 1000
+Z = np.random.normal(0, 1, n)
+X = 2 * Z + np.random.normal(0, 1, n)  # X depends on Z
+Y = 3 * X + 4 * Z + np.random.normal(0, 1, n)  # Y depends on both X and Z
+
+data = pd.DataFrame({'X': X, 'Y': Y, 'Z': Z})
+
+# Create and visualize the DAG
+G = nx.DiGraph()
+G.add_nodes_from(['X', 'Y', 'Z'])
+G.add_edges_from([('Z', 'X'), ('X', 'Y'), ('Z', 'Y')])
+
+plt.figure(figsize=(8, 6))
+pos = nx.spring_layout(G, seed=42)
+nx.draw(G, pos, with_labels=True, node_size=3000, node_color='skyblue', font_size=14, font_weight='bold', edge_color='gray')
+plt.title("Causal DAG with a Backdoor Path")
+plt.show()
+
+# Estimate the causal effect without and with controlling for Z
+model_without_Z = sm.OLS(data['Y'], sm.add_constant(data[['X']])).fit()
+print("Without controlling for Z:")
+print(model_without_Z.summary())
+
+model_with_Z = sm.OLS(data['Y'], sm.add_constant(data[['X', 'Z']])).fit()
+print("\nWith controlling for Z:")
+print(model_with_Z.summary())
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 mport pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
