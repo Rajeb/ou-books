@@ -1,14 +1,36 @@
-for raster_file in raster_files:
-    with rasterio.open(raster_file) as src:
-        raster_data = src.read(1)  # Read the first band of the raster
+
+# Step 1: Function to extract raster data and return it as a DataFrame
+def raster_to_dataframe(raster_path):
+    with rasterio.open(raster_path) as src:
+        raster_data = src.read(1)  # Reading the first band of the raster
         no_data_value = src.nodata
         transform = src.transform
 
-        # Filter out no-data values and get corresponding pixel coordinates
+        # Generate arrays of pixel coordinates (row, col) and filter no-data values
         rows, cols = np.where(raster_data != no_data_value)
-        raster_coords = np.array([src.transform * (col, row) for row, col in zip(rows, cols)])
+        raster_values = raster_data[rows, cols]
 
-        # Step 2: Calculate minimum distance for each event for the current raster
-        df_events[f'min_distance_{raster_file}'] = df_events.apply(
-            lambda row: calculate_min_distance(row['latitude'], row['longitude'], raster_coords), axis=1
-        )
+        # Convert pixel (row, col) to lat/long using the transform
+        lat_long_coords = np.array([src.transform * (col, row) for row, col in zip(rows, cols)])
+        lats, lons = zip(*lat_long_coords)
+
+        # Create a DataFrame with lat, lon, and raster values
+        df_raster = pd.DataFrame({
+            'latitude': lats,
+            'longitude': lons,
+            'raster_value': raster_values
+        })
+
+    return df_raster
+
+# Step 2: Prepare your list of raster files
+raster_files = ['raster1.tif', 'raster2.tif', 'raster3.tif']
+
+# Step 3: Convert each raster file to a DataFrame and store it in a list
+raster_dfs = []
+for raster_path in raster_files:
+    df_raster = raster_to_dataframe(raster_path)
+    raster_dfs.append(df_raster)
+
+# Step 4: Print the first few rows of one of the raster DataFrames
+print(raster_dfs[0].head())  # This will print the first few rows of the first raster's DataFrame
