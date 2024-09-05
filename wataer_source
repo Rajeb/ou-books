@@ -1,4 +1,63 @@
 
+t pandas as pd
+from scipy.spatial import distance
+
+# Function to filter raster based on a bounding box around the event location
+def get_nearby_raster_values(lat, lon, src, buffer_distance=0.1):
+    """
+    Returns the raster values and their coordinates within a buffer around the given lat, lon.
+    :param lat: Latitude of the event
+    :param lon: Longitude of the event
+    :param src: Opened rasterio object
+    :param buffer_distance: Buffer distance (degrees) around the event location
+    :return: DataFrame with nearby raster values and coordinates
+    """
+    # Get the raster's bounds in world coordinates
+    minx, miny, maxx, maxy = src.bounds
+
+    # Define the bounding box around the event
+    left = lon - buffer_distance
+    right = lon + buffer_distance
+    bottom = lat - buffer_distance
+    top = lat + buffer_distance
+
+    # Ensure the bounding box does not exceed raster bounds
+    left = max(left, minx)
+    right = min(right, maxx)
+    bottom = max(bottom, miny)
+    top = min(top, maxy)
+
+    # Get the pixel window that covers the bounding box
+    row_start, col_start = src.index(left, top)
+    row_stop, col_stop = src.index(right, bottom)
+
+    # Read the subset of the raster data within the bounding box
+    window = ((row_start, row_stop), (col_start, col_stop))
+    raster_subset = src.read(1, window=window)
+
+    # Get the coordinates of the pixels within the window
+    rows, cols = np.where(raster_subset != src.nodata)
+    raster_values = raster_subset[rows, cols]
+    coords = [src.xy(row + row_start, col + col_start) for row, col in zip(rows, cols)]
+
+    # Create a DataFrame with the coordinates and values
+    raster_df = pd.DataFrame(coords, columns=['latitude', 'longitude'])
+    raster_df['value'] = raster_values
+
+    return raster_df
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Step 1: Function to extract raster data and return it as a DataFrame
 def raster_to_dataframe(raster_path):
     with rasterio.open(raster_path) as src:
