@@ -1,0 +1,14 @@
+for raster_file in raster_files:
+    with rasterio.open(raster_file) as src:
+        raster_data = src.read(1)  # Read the first band of the raster
+        no_data_value = src.nodata
+        transform = src.transform
+
+        # Filter out no-data values and get corresponding pixel coordinates
+        rows, cols = np.where(raster_data != no_data_value)
+        raster_coords = np.array([src.transform * (col, row) for row, col in zip(rows, cols)])
+
+        # Step 2: Calculate minimum distance for each event for the current raster
+        df_events[f'min_distance_{raster_file}'] = df_events.apply(
+            lambda row: calculate_min_distance(row['latitude'], row['longitude'], raster_coords), axis=1
+        )
