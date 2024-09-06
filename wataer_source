@@ -1,3 +1,96 @@
+import rasterio
+import numpy as np
+import pandas as pd
+from scipy.spatial import KDTree
+
+def get_raster_df_chunk(raster_path, window, no_data_value):
+    """
+    Read a chunk of the raster data and return a DataFrame with valid pixel coordinates and values.
+    :param raster_path: Path to the raster file
+    :param window: Tuple defining the chunk to read (row_start, row_stop, col_start, col_stop)
+    :param no_data_value: No-data value to filter out
+    :return: DataFrame with raster coordinates and values
+    """
+    with rasterio.open(raster_path) as src:
+        # Read the chunk of the raster data
+        raster_data = src.read(1, window=window)
+        
+        # Get the coordinates of the pixels within the chunk
+        rows, cols = np.where(raster_data != no_data_value)
+        raster_values = raster_data[rows, cols]
+        coords = [src.xy(row + window[0], col + window[2]) for row, col in zip(rows, cols)]
+        
+    return pd.DataFrame({'latitude': [c[1] for c in coords], 'longitude': [c[0] for c in coords], 'value': raster_values})
+
+def process_raster_in_chunks(raster_path, chunk_size=512):
+    """
+    Process the raster file in chunks and return a DataFrame with all valid pixel coordinates and values.
+    :param raster_path: Path to the raster file
+    :param chunk_size: Size of each chunk
+    :return: DataFrame with all valid pixel coordinates and values
+    """
+    with rasterio.open(raster_path) as src:
+        height, width = src.height, src.width
+        no_data_value = src.nodata
+        
+        # Initialize an empty list to collect DataFrames
+        all_chunks_df = []
+        
+        # Iterate over chunks of the raster
+        for row_start in range(0, height, chunk_size):
+            row_stop = min(row_start + chunk_size, height)
+            for col_start in range(0, width, chunk_size):
+                col_stop = min(col_start + chunk_size, width)
+                window = ((row_start, row_stop), (col_start, col_stop))
+                
+                # Read and process the chunk
+                chunk_df = get_raster_df_chunk(raster_path, window, no_data_value)
+                all_chunks_df.append(chunk_df)
+        
+        # Combine all chunks into a single DataFrame
+        return pd.concat(all_chunks_df, ignore_index=True)
+
+# Example usage:
+raster_path = 'large_raster.tif'
+chunk_size = 512  # Adjust chunk size based on available memory
+
+# Process raster file in chunks
+raster_df = process_raster_in_chunks(raster_path, chunk_size)
+
+# Prepare your DataFrame with event locations
+df_events = pd.DataFrame({
+    'latitude': [35.0, 34.5],  # Example latitudes
+    'longitude': [-120.5, -121.0]  # Example longitudes
+})
+
+# Function to calculate minimum distance using KDTree
+def calculate_min_distance_kdtree(lat, lon, raster_df):
+    tree = KDTree(raster_df[['latitude', 'longitude']])
+    event_coords = np.array([lat, lon])
+    _, indices = tree.query(event_coords, k=1)
+    min_distance = np.linalg.norm(event_coords - raster_df.iloc[indices][['latitude', 'longitude']].values)
+    return min_distance
+
+# Calculate minimum distances for each event
+for idx, row in df_events.iterrows():
+    lat, lon = row['latitude'], row['longitude']
+    min_distance = calculate_min_distance_kdtree(lat, lon, raster_df)
+    df_events.loc[idx, 'min_distance'] = min_distance
+
+print(df_events)
+
+
+
+
+
+
+
+
+
+
+
+
+--------------------------------------------------------------
 
 t pandas as pd
 from scipy.spatial import distance
