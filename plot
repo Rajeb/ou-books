@@ -12,3 +12,13 @@ for i, col in enumerate(weather_columns, 1):
     plt.title(f'Distribution of {col}')
 plt.tight_layout()
 plt.show()
+
+
+
+
+weather_df['date'] = pd.to_datetime(weather_df['date'])
+
+# Extract relevant time components (year, month, season)
+weather_df['year'] = weather_df['date'].dt.year
+weather_df['month'] = weather_df['date'].dt.month
+weather_df['day_of_year'] = weather_df['date'].dt.dayofyear
