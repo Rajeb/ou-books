@@ -22,3 +22,14 @@ weather_df['date'] = pd.to_datetime(weather_df['date'])
 weather_df['year'] = weather_df['date'].dt.year
 weather_df['month'] = weather_df['date'].dt.month
 weather_df['day_of_year'] = weather_df['date'].dt.dayofyear
+
+
+
+plt.figure(figsize=(15, 8))
+for col in weather_df.columns.drop(['date', 'year', 'month', 'season', 'day_of_year']):
+    plt.plot(daily_weather['day_of_year'], daily_weather[col], label=col)
+plt.title('Daily Changes of Weather Variables Over the Years')
+plt.xlabel('Day of Year')
+plt.ylabel('Average Weather Value')
+plt.legend(loc='upper right')
+plt.show()
