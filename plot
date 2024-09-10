@@ -104,3 +104,46 @@ plt.xticks(events_per_year['year'])  # Ensure all years are displayed on x-axis
 plt.grid(axis='y')
 plt.tight_layout()
 plt.show()
+
+
+
+
+
+
+
+
+
+
+
+# Create an empty DataFrame to store results
+results = []
+
+for weather_var in weather_vars:
+    # Aggregate weather data to get the yearly mean
+    yearly_weather = weather_df.groupby('year')[weather_var].mean().reset_index()
+    
+    # Merge the total event count with the yearly weather data
+    combined_df = pd.merge(events_per_year, yearly_weather, on='year')
+    
+    # Calculate the correlation
+    correlation = combined_df['event_count'].corr(combined_df[weather_var])
+    
+    # Append results
+    results.append({'weather_var': weather_var, 'correlation': correlation})
+    
+    # Plot the correlation
+    plt.figure(figsize=(8, 6))
+    plt.scatter(combined_df[weather_var], combined_df['event_count'], color='coral', edgecolor='k')
+    plt.title(f'Event Count vs. {weather_var}')
+    plt.xlabel(f'{weather_var}')
+    plt.ylabel('Total Event Count')
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+# Convert results to DataFrame for easy viewing
+results_df = pd.DataFrame(results)
+
+# Display correlation results
+print(results_df)
+
