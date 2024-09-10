@@ -33,3 +33,49 @@ plt.xlabel('Day of Year')
 plt.ylabel('Average Weather Value')
 plt.legend(loc='upper right')
 plt.show()
+
+
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Assuming these columns represent the aggregated time scales:
+# - 'day_of_year' for daily data
+# - 'month' for monthly data
+# - 'season' for seasonal data
+
+# List of weather variables (excluding the date, year, month, day_of_year, and season columns)
+weather_columns = weather_df.columns.drop(['date', 'year', 'month', 'season', 'day_of_year'])
+
+# Number of weather variables
+n_vars = len(weather_columns)
+
+### Subplots for Daily, Monthly, and Seasonal Data ###
+
+fig, axes = plt.subplots(n_vars, 3, figsize=(18, 4 * n_vars))  # 3 subplots per row (daily, monthly, seasonal)
+
+# Plotting for each weather variable
+for i, col in enumerate(weather_columns):
+    
+    # Daily Changes Plot
+    sns.lineplot(x='day_of_year', y=col, hue='year', data=weather_df, ax=axes[i, 0], palette='coolwarm')
+    axes[i, 0].set_title(f'Daily Changes of {col} by Year')
+    axes[i, 0].set_xlabel('Day of Year')
+    axes[i, 0].set_ylabel(f'{col} Value')
+    
+    # Monthly Changes Plot
+    sns.lineplot(x='month', y=col, hue='year', data=weather_df, ax=axes[i, 1], palette='coolwarm')
+    axes[i, 1].set_title(f'Monthly Changes of {col} by Year')
+    axes[i, 1].set_xlabel('Month')
+    axes[i, 1].set_ylabel(f'{col} Value')
+    
+    # Seasonal Changes Plot
+    sns.lineplot(x='season', y=col, hue='year', data=weather_df, ax=axes[i, 2], palette='coolwarm')
+    axes[i, 2].set_title(f'Seasonal Changes of {col} by Year')
+    axes[i, 2].set_xlabel('Season')
+    axes[i, 2].set_ylabel(f'{col} Value')
+
+# Adjust layout for better readability
+plt.tight_layout()
+plt.show()
+
