@@ -1,6 +1,75 @@
 
 ############ Calculate miimum distance #############
+csv_directory = 'path_to_directory_with_csv_files'
+csv_files = [f for f in os.listdir(csv_directory) if f.endswith('.csv')]
 
+# Prepare a list of DataFrames by reading each CSV file
+dataframes = []
+for csv_file in csv_files:
+    file_path = os.path.join(csv_directory, csv_file)
+    df = pd.read_csv(file_path)
+    dataframes.append(df)
+
+# Define a function to process water bodies and calculate minimum distance
+def process_water_bodies_in_chunks(water_df, df_events, chunk_size=10000):
+    min_distances = []
+
+    # Iterate through the water body DataFrame in chunks
+    for start in range(0, len(water_df), chunk_size):
+        chunk = water_df.iloc[start:start+chunk_size]
+        
+        # Filter out zero values or no-data values
+        chunk = chunk[(chunk['value'] != 0) & (chunk['value'] != -9999)]
+        
+        # Build KDTree from the chunk's water body locations
+        water_tree = KDTree(chunk[['latitude', 'longitude']])
+        
+        # Calculate minimum distance for each event in df_events
+        distances, _ = water_tree.query(df_events[['latitude', 'longitude']], k=1)
+        
+        # Store the minimum distances
+        min_distances.append(distances)
+    
+    # Combine all minimum distances from chunks
+    return np.min(min_distances, axis=0)
+
+# Initialize checkpoint and final results DataFrame
+checkpoint_file = 'min_distances_checkpoint.csv'
+if os.path.exists(checkpoint_file):
+    df_events = pd.read_csv(checkpoint_file)
+    print("Checkpoint loaded.")
+else:
+    for df_water in dataframes:
+        df_water.columns = ['latitude', 'longitude', 'value']  # Adjust as needed
+    df_events['min_distance_overall'] = np.nan
+
+# Track progress and calculate distances
+total_events = len(df_events)
+for idx, event in df_events.iterrows():
+    if not pd.isna(event['min_distance_overall']):
+        continue
+    
+    for df_water in dataframes:
+        df_water.columns = ['latitude', 'longitude', 'value']  # Adjust as needed
+        min_distances = process_water_bodies_in_chunks(df_water, df_events.iloc[[idx]])
+        df_events.at[idx, f'min_distance_{df_water.index.name}'] = min_distances[0]
+    
+    df_events.at[idx, 'min_distance_overall'] = df_events[[f'min_distance_{df_water.index.name}' for df_water in dataframes]].min(axis=1)
+    df_events.to_csv(checkpoint_file, index=False)
+    
+    progress_percentage = (idx + 1) / total_events * 100
+    print(f"Processed event {idx + 1}/{total_events} ({progress_percentage:.2f}%)")
+
+df_events.to_csv('final_min_distances.csv', index=False)
+print("Processing complete. Final results saved to 'final_min_distances.csv'.")
+
+
+
+
+
+
+
+################################################################
 
 import pandas as pd
 import numpy as np
