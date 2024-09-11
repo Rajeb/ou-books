@@ -1,3 +1,95 @@
+
+############ Calculate miimum distance #############
+
+
+import pandas as pd
+import numpy as np
+from scipy.spatial import KDTree
+import os
+
+# Load event locations into a DataFrame
+df_events = pd.DataFrame({
+    'latitude': [34.1, 35.2, 36.3, 37.4],  # Example latitudes (add your actual data)
+    'longitude': [-118.5, -119.6, -120.7, -121.8]  # Example longitudes (add your actual data)
+})
+
+# Define water body CSV files
+water_files = ['water_bodies1.csv', 'water_bodies2.csv', 'water_bodies3.csv']
+
+# Define checkpoint file
+checkpoint_file = 'min_distances_checkpoint.csv'
+
+# Load checkpoint if it exists
+if os.path.exists(checkpoint_file):
+    df_events = pd.read_csv(checkpoint_file)
+    print("Checkpoint loaded.")
+else:
+    # Initialize columns for each water file
+    for water_file in water_files:
+        df_events[f'min_distance_{water_file}'] = np.nan
+    df_events['min_distance_overall'] = np.nan
+
+# Function to process water body CSV in chunks and calculate minimum distance
+def process_water_bodies_in_chunks(water_file, df_events, chunk_size=10000):
+    min_distances = []
+
+    # Iterate through the water body CSV file in chunks
+    for chunk in pd.read_csv(water_file, chunksize=chunk_size):
+        # Filter out zero values or no-data values (assuming no-data is -9999 or adjust accordingly)
+        chunk = chunk[(chunk['value'] != 0) & (chunk['value'] != -9999)]
+        
+        # Build KDTree from the chunk's water body locations
+        water_tree = KDTree(chunk[['latitude', 'longitude']])
+        
+        # Calculate minimum distance for each event in df_events
+        distances, indices = water_tree.query(df_events[['latitude', 'longitude']], k=1)
+        
+        # Store the minimum distances
+        min_distances.append(distances)
+
+    # Combine all minimum distances from chunks
+    return np.min(min_distances, axis=0)
+
+# Calculate the minimum distances for each event from all water files
+total_events = len(df_events)
+for idx, event in df_events.iterrows():
+    # Skip if this event has already been processed (i.e., min_distance_overall is not NaN)
+    if not pd.isna(event['min_distance_overall']):
+        continue
+
+    # Process the event for each water file
+    for water_file in water_files:
+        min_distances = process_water_bodies_in_chunks(water_file, df_events.iloc[[idx]])  # Calculate for one event
+        df_events.at[idx, f'min_distance_{water_file}'] = min_distances[0]
+    
+    # After processing all water files, find the overall minimum distance for the event
+    df_events.at[idx, 'min_distance_overall'] = df_events.loc[idx, [f'min_distance_{file}' for file in water_files]].min()
+    
+    # Save the DataFrame to the checkpoint file after each event
+    df_events.to_csv(checkpoint_file, index=False)
+    
+    # Calculate and print the percentage progress
+    progress_percentage = (idx + 1) / total_events * 100
+    print(f"Processed event {idx + 1}/{total_events} ({progress_percentage:.2f}%)")
+
+# After processing all events, the final results are saved
+df_events.to_csv('final_min_distances.csv', index=False)
+print("Processing complete. Final results saved to 'final_min_distances.csv'.")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import rasterio
 import numpy as np
 import pandas as pd
