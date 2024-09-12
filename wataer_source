@@ -1,3 +1,76 @@
+
+import dask.dataframe as dd
+import geopandas as gpd
+from shapely.geometry import Point
+from geopy.distance import great_circle
+import pandas as pd
+
+# Constants
+BUFFER_DISTANCES_MILES = list(range(10, 110, 10))  # Buffers from 10 to 100 miles (increment by 10)
+csv_directory = 'path_to_directory_with_csv_files'
+
+# Create Dask dataframe for large CSV files
+def load_and_process_csv(file_path):
+    dask_df = dd.read_csv(file_path)
+    dask_df = dask_df[(dask_df['value'] != 0) & (dask_df['value'] != -9999)]
+    return dask_df
+
+# Convert to GeoDataFrame and create spatial index
+def create_geodataframe(df):
+    gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df['longitude'], df['latitude']))
+    gdf.set_crs('EPSG:4326', inplace=True)  # WGS84
+    return gdf
+
+# Function to calculate minimum distance
+def calculate_event_distances(event_lat, event_lon, gdf, buffer_distance_miles):
+    event_point = Point(event_lon, event_lat)
+    buffer = event_point.buffer(buffer_distance_miles / 3963.2)  # 3963.2 miles is the Earth's radius
+    buffer_gdf = gdf[gdf.geometry.intersects(buffer)]
+    if buffer_gdf.empty:
+        return 0
+    return len(buffer_gdf)
+
+# Load events
+df_events = pd.DataFrame({
+    'event_id': [1, 2, 3],  # Example event IDs
+    'latitude': [34.1, 35.2, 36.5],
+    'longitude': [-118.5, -119.6, -120.7]
+})
+
+# Initialize buffer results
+buffer_results = {buffer: 0 for buffer in BUFFER_DISTANCES_MILES}
+
+# Process each CSV file
+csv_files = [f for f in os.listdir(csv_directory) if f.endswith('.csv')]
+for csv_file in csv_files:
+    file_path = os.path.join(csv_directory, csv_file)
+    dask_df = load_and_process_csv(file_path)
+    gdf = create_geodataframe(dask_df.compute())  # Convert to GeoDataFrame
+
+    # Loop through each buffer distance
+    for buffer_distance in BUFFER_DISTANCES_MILES:
+        # Loop through each event
+        for event_idx, event_row in df_events.iterrows():
+            event_lat, event_lon = event_row['latitude'], event_row['longitude']
+            count = calculate_event_distances(event_lat, event_lon, gdf, buffer_distance)
+            if count > 0:
+                buffer_results[buffer_distance] += 1
+
+# Display results
+for buffer_distance, count in buffer_results.items():
+    print(f"{count} events have at least one water surface within {buffer_distance} miles")
+
+
+
+
+
+
+
+
+
+
+
+
 import os
 import pandas as pd
 
