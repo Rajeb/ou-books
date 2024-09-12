@@ -1,3 +1,21 @@
+# Add the top 10 minimum distances to the event DataFrame
+for i in range(10):
+    event_df[f'top_{i+1}_min_distance'] = top_10_distances[:, i]
+
+# Save the updated event DataFrame with top 10 minimum distances
+event_df.to_csv('event_top_10_min_distances.csv', index=False)
+print("Top 10 distances saved to 'event_top_10_min_distances.csv'")
+
+
+
+
+
+
+
+
+
+
+
 import pandas as pd
 import numpy as np
 import os
