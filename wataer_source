@@ -105,6 +105,119 @@ for buffer_distance, count in buffer_results.items():
     print(f"{count} events have at least one water surface within {buffer_distance} miles")
 
 
+
+
+
+
+
+
+import os
+import pandas as pd
+import dask.dataframe as dd
+import geopandas as gpd
+from shapely.geometry import Point
+from geopy.distance import great_circle
+from dask import delayed
+
+# Constants
+BUFFER_DISTANCES_MILES = list(range(10, 110, 10))  # Buffers from 10 to 100 miles (increment by 10)
+csv_directory = 'path_to_directory_with_csv_files'
+csv_files = [f for f in os.listdir(csv_directory) if f.endswith('.csv')]
+
+# Initialize buffer results
+buffer_results = {buffer: 0 for buffer in BUFFER_DISTANCES_MILES}
+
+# Create a log file to track progress
+log_file_path = 'progress_log.txt'
+with open(log_file_path, 'w') as log_file:
+    log_file.write('Starting processing\n')
+
+# Function to load and process CSV file
+@delayed
+def load_and_process_csv(file_path):
+    log_message = f'Loading {file_path}\n'
+    with open(log_file_path, 'a') as log_file:
+        log_file.write(log_message)
+        
+    dask_df = dd.read_csv(file_path)
+    dask_df = dask_df[(dask_df['value'] != 0) & (dask_df['value'] != -9999)]
+    return dask_df
+
+# Convert to GeoDataFrame and create spatial index
+def create_geodataframe(df):
+    gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df['longitude'], df['latitude']))
+    gdf.set_crs('EPSG:4326', inplace=True)  # WGS84
+    return gdf
+
+# Function to calculate minimum distance
+def calculate_event_distances(event_lat, event_lon, gdf, buffer_distance_miles):
+    event_point = Point(event_lon, event_lat)
+    buffer = event_point.buffer(buffer_distance_miles / 3963.2)  # 3963.2 miles is the Earth's radius
+    buffer_gdf = gdf[gdf.geometry.intersects(buffer)]
+    if buffer_gdf.empty:
+        return 0
+    return len(buffer_gdf)
+
+# Load events
+df_events = pd.DataFrame({
+    'event_id': [1, 2, 3],  # Example event IDs
+    'latitude': [34.1, 35.2, 36.5],
+    'longitude': [-118.5, -119.6, -120.7]
+})
+
+# Convert events to GeoDataFrame
+gdf_events = gpd.GeoDataFrame(df_events, geometry=gpd.points_from_xy(df_events['longitude'], df_events['latitude']))
+gdf_events.set_crs('EPSG:4326', inplace=True)  # WGS84
+
+# Process each CSV file (water occurrence data)
+for csv_file in csv_files:
+    file_path = os.path.join(csv_directory, csv_file)
+    
+    # Load and process CSV file
+    dask_df = load_and_process_csv(file_path).compute()
+    gdf = create_geodataframe(dask_df)  # Convert to GeoDataFrame
+
+    # Progress log
+    with open(log_file_path, 'a') as log_file:
+        log_file.write(f'Processing file {file_path}\n')
+
+    # Loop through each buffer distance
+    for buffer_distance in BUFFER_DISTANCES_MILES:
+        log_message = f'Processing buffer distance {buffer_distance} miles\n'
+        with open(log_file_path, 'a') as log_file:
+            log_file.write(log_message)
+        
+        # Initialize a set to keep track of events with water occurrence within the buffer
+        events_with_water = set()
+        
+        # Loop through each event
+        for event_idx, event_row in df_events.iterrows():
+            event_lat, event_lon = event_row['latitude'], event_row['longitude']
+            
+            # Calculate distances
+            count = calculate_event_distances(event_lat, event_lon, gdf, buffer_distance)
+            if count > 0:
+                events_with_water.add(event_row['event_id'])
+        
+        # Count how many events have at least one water surface within the current buffer distance
+        buffer_results[buffer_distance] += len(events_with_water)
+        
+        # Log intermediate results
+        with open(log_file_path, 'a') as log_file:
+            log_file.write(f'{len(events_with_water)} events have at least one water surface within {buffer_distance} miles\n')
+
+# Final results
+with open(log_file_path, 'a') as log_file:
+    log_file.write('Final results:\n')
+    for buffer_distance, count in buffer_results.items():
+        log_file.write(f'{count} events have at least one water surface within {buffer_distance} miles\n')
+    log_file.write('Processing completed\n')
+
+# Display final results
+for buffer_distance, count in buffer_results.items():
+    print(f"{count} events have at least one water surface within {buffer_distance} miles")
+
+
 # Display results
 for buffer_distance, count in buffer_results.items():
     print(f"{count} events have at least one water surface within {buffer_distance} miles")
