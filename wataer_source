@@ -1,16 +1,31 @@
-
+import os
+import pandas as pd
 import dask.dataframe as dd
 import geopandas as gpd
 from shapely.geometry import Point
 from geopy.distance import great_circle
-import pandas as pd
+from dask import delayed
 
 # Constants
 BUFFER_DISTANCES_MILES = list(range(10, 110, 10))  # Buffers from 10 to 100 miles (increment by 10)
 csv_directory = 'path_to_directory_with_csv_files'
+csv_files = [f for f in os.listdir(csv_directory) if f.endswith('.csv')]
 
-# Create Dask dataframe for large CSV files
+# Initialize buffer results
+buffer_results = {buffer: 0 for buffer in BUFFER_DISTANCES_MILES}
+
+# Create a log file to track progress
+log_file_path = 'progress_log.txt'
+with open(log_file_path, 'w') as log_file:
+    log_file.write('Starting processing\n')
+
+# Function to load and process CSV file
+@delayed
 def load_and_process_csv(file_path):
+    log_message = f'Loading {file_path}\n'
+    with open(log_file_path, 'a') as log_file:
+        log_file.write(log_message)
+        
     dask_df = dd.read_csv(file_path)
     dask_df = dask_df[(dask_df['value'] != 0) & (dask_df['value'] != -9999)]
     return dask_df
@@ -37,24 +52,58 @@ df_events = pd.DataFrame({
     'longitude': [-118.5, -119.6, -120.7]
 })
 
-# Initialize buffer results
-buffer_results = {buffer: 0 for buffer in BUFFER_DISTANCES_MILES}
+# Convert events to GeoDataFrame
+gdf_events = gpd.GeoDataFrame(df_events, geometry=gpd.points_from_xy(df_events['longitude'], df_events['latitude']))
+gdf_events.set_crs('EPSG:4326', inplace=True)  # WGS84
 
-# Process each CSV file
-csv_files = [f for f in os.listdir(csv_directory) if f.endswith('.csv')]
+# Process each CSV file (water occurrence data)
 for csv_file in csv_files:
     file_path = os.path.join(csv_directory, csv_file)
-    dask_df = load_and_process_csv(file_path)
-    gdf = create_geodataframe(dask_df.compute())  # Convert to GeoDataFrame
+    
+    # Load and process CSV file
+    dask_df = load_and_process_csv(file_path).compute()
+    gdf = create_geodataframe(dask_df)  # Convert to GeoDataFrame
+
+    # Progress log
+    with open(log_file_path, 'a') as log_file:
+        log_file.write(f'Processing file {file_path}\n')
 
     # Loop through each buffer distance
     for buffer_distance in BUFFER_DISTANCES_MILES:
+        log_message = f'Processing buffer distance {buffer_distance} miles\n'
+        with open(log_file_path, 'a') as log_file:
+            log_file.write(log_message)
+        
+        # Initialize a set to keep track of events with water occurrence within the buffer
+        events_with_water = set()
+        
         # Loop through each event
         for event_idx, event_row in df_events.iterrows():
             event_lat, event_lon = event_row['latitude'], event_row['longitude']
+            
+            # Calculate distances
             count = calculate_event_distances(event_lat, event_lon, gdf, buffer_distance)
             if count > 0:
-                buffer_results[buffer_distance] += 1
+                events_with_water.add(event_row['event_id'])
+        
+        # Count how many events have at least one water surface within the current buffer distance
+        buffer_results[buffer_distance] += len(events_with_water)
+        
+        # Log intermediate results
+        with open(log_file_path, 'a') as log_file:
+            log_file.write(f'{len(events_with_water)} events have at least one water surface within {buffer_distance} miles\n')
+
+# Final results
+with open(log_file_path, 'a') as log_file:
+    log_file.write('Final results:\n')
+    for buffer_distance, count in buffer_results.items():
+        log_file.write(f'{count} events have at least one water surface within {buffer_distance} miles\n')
+    log_file.write('Processing completed\n')
+
+# Display final results
+for buffer_distance, count in buffer_results.items():
+    print(f"{count} events have at least one water surface within {buffer_distance} miles")
+
 
 # Display results
 for buffer_distance, count in buffer_results.items():
