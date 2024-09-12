@@ -1,3 +1,74 @@
+
+############ use buffer
+
+import os
+import pandas as pd
+from geopy.distance import great_circle
+from scipy.spatial import KDTree
+
+# Constants
+MILES_TO_KM = 1.60934
+BUFFER_RADIUS_MILES = 50
+BUFFER_RADIUS_KM = BUFFER_RADIUS_MILES * MILES_TO_KM
+
+# Define the directory containing CSV files for water occurrence
+csv_directory = 'path_to_directory_with_csv_files'
+csv_files = [f for f in os.listdir(csv_directory) if f.endswith('.csv')]
+
+# Event DataFrame (make sure you have lat/long for events)
+df_events = pd.DataFrame({
+    'event_id': [1, 2, 3],  # Example event IDs
+    'latitude': [34.1, 35.2, 36.5],
+    'longitude': [-118.5, -119.6, -120.7]
+})
+
+# Function to calculate distance between two lat/lon points
+def calculate_distance(event_lat, event_lon, point_lat, point_lon):
+    return great_circle((event_lat, event_lon), (point_lat, point_lon)).miles
+
+# Process each CSV file
+for csv_file in csv_files:
+    file_path = os.path.join(csv_directory, csv_file)
+    
+    # Read the CSV file in chunks
+    for chunk in pd.read_csv(file_path, chunksize=10000):
+        # Filter out rows with values of 0 or no-data
+        chunk = chunk[(chunk['value'] != 0) & (chunk['value'] != -9999)]
+        
+        # Loop through each event
+        for event_idx, event_row in df_events.iterrows():
+            event_lat, event_lon = event_row['latitude'], event_row['longitude']
+            
+            # Filter water points within a 50-mile buffer
+            chunk['distance'] = chunk.apply(
+                lambda row: calculate_distance(event_lat, event_lon, row['latitude'], row['longitude']),
+                axis=1
+            )
+            filtered_chunk = chunk[chunk['distance'] <= BUFFER_RADIUS_MILES]
+
+            # If there are points within the buffer, calculate the minimum distance
+            if not filtered_chunk.empty:
+                min_distance = filtered_chunk['distance'].min()
+                print(f"Event {event_row['event_id']} minimum distance to water: {min_distance:.2f} miles")
+            else:
+                print(f"Event {event_row['event_id']} has no water occurrences within 50 miles.")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import seaborn as sns
 import matplotlib.pyplot as plt
 
