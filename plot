@@ -1,3 +1,38 @@
+plot minimum distance
+
+
+import pandas as pd
+import plotly.express as px
+
+# Load the final CSV file with event locations and minimum distances
+event_df = pd.read_csv('event_min_distances.csv')
+
+# Plotly scatter plot of event locations with distance as color scale
+fig = px.scatter_geo(
+    event_df,
+    lat='event_lat',
+    lon='event_long',
+    color='min_distance_to_water',  # Use the minimum distance as the color scale
+    color_continuous_scale='Viridis',  # Choose a color scale
+    size='min_distance_to_water',  # Optional: size of markers based on distance
+    hover_name='min_distance_to_water',  # Show the distance on hover
+    projection="natural earth",  # Use the natural earth projection for global maps
+    title="Minimum Distance to Water Occurrence from Event Locations"
+)
+
+# Update layout for better visualization
+fig.update_layout(
+    geo=dict(
+        showland=True,
+        landcolor="rgb(217, 217, 217)",
+        showcountries=True,
+        countrycolor="rgb(204, 204, 204)",
+    ),
+    margin={"r":0,"t":30,"l":0,"b":0}
+)
+
+# Show the plot
+fig.show()
 
 ############ use buffer
 
