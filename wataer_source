@@ -1,3 +1,66 @@
+
+import pandas as pd
+import numpy as np
+from scipy.spatial import cKDTree
+
+# Load event locations
+event_df = pd.read_csv('event_locations.csv')  # Contains lat, long for event locations
+event_coords = event_df[['lat', 'long']].to_numpy()
+
+# Function to calculate minimum distance between events and water points
+def calculate_min_distance(event_coords, water_df_chunk):
+    water_coords = water_df_chunk[['lat', 'long']].to_numpy()
+    
+    # Build a spatial index (KDTree) for the water points
+    tree = cKDTree(water_coords)
+    
+    # Query the tree for the nearest water point for each event
+    distances, indices = tree.query(event_coords)
+    
+    # Return the minimum distance for each event
+    return distances
+
+# Process large water occurrence data in chunks
+water_files = ['water1.csv', 'water2.csv', 'water3.csv']
+min_distances = []
+
+for water_file in water_files:
+    print(f"Processing water file: {water_file}")
+    
+    # Load water occurrence data in chunks
+    chunk_size = 100000  # Adjust based on available memory
+    for water_chunk in pd.read_csv(water_file, chunksize=chunk_size):
+        # Calculate the minimum distance between each event and the current chunk of water points
+        distances = calculate_min_distance(event_coords, water_chunk)
+        min_distances.append(distances)
+
+# Combine results across all water chunks
+final_distances = np.min(np.vstack(min_distances), axis=0)
+
+# Add the minimum distance to the event DataFrame
+event_df['min_distance_to_water'] = final_distances
+
+# Output the event DataFrame with the minimum distance column
+print(event_df.head())
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import os
 import pandas as pd
 import dask.dataframe as dd
