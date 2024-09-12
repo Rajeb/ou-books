@@ -1,3 +1,94 @@
+import pandas as pd
+import numpy as np
+import os
+from scipy.spatial import cKDTree
+
+# Load event locations
+event_df = pd.read_csv('event_locations.csv')  # Contains lat, long for event locations
+event_coords = event_df[['lat', 'long']].to_numpy()
+
+# Checkpoint file path
+checkpoint_file = 'min_distances_checkpoint.csv'
+
+# Check if checkpoint exists
+if os.path.exists(checkpoint_file):
+    # Load the checkpointed minimum distances
+    print(f"Resuming from checkpoint: {checkpoint_file}")
+    checkpoint_df = pd.read_csv(checkpoint_file)
+    processed_chunks = checkpoint_df['chunk_index'].max() + 1
+    min_distances = checkpoint_df['min_distance'].to_numpy()
+else:
+    # Initialize for the first run
+    print("No checkpoint found, starting fresh")
+    processed_chunks = 0
+    min_distances = np.full(len(event_coords), np.inf)  # Initialize with infinity (no distances yet)
+
+# Function to calculate minimum distance between events and water points
+def calculate_min_distance(event_coords, water_df_chunk):
+    water_coords = water_df_chunk[['lat', 'long']].to_numpy()
+    
+    # Build a spatial index (KDTree) for the water points
+    tree = cKDTree(water_coords)
+    
+    # Query the tree for the nearest water point for each event
+    distances, indices = tree.query(event_coords)
+    
+    return distances
+
+# Process large water occurrence data in chunks
+water_files = ['water1.csv', 'water2.csv', 'water3.csv']
+chunk_size = 100000  # Adjust based on available memory
+chunk_index = 0
+
+for water_file in water_files:
+    print(f"Processing water file: {water_file}")
+    
+    for water_chunk in pd.read_csv(water_file, chunksize=chunk_size):
+        if chunk_index < processed_chunks:
+            # Skip the already processed chunks
+            chunk_index += 1
+            continue
+        
+        print(f"Processing chunk {chunk_index}")
+        
+        # Calculate the minimum distance between each event and the current chunk of water points
+        distances = calculate_min_distance(event_coords, water_chunk)
+        
+        # Update minimum distances (keeping the smallest distance for each event)
+        min_distances = np.minimum(min_distances, distances)
+        
+        # Save intermediate results as a checkpoint
+        checkpoint_df = pd.DataFrame({
+            'chunk_index': [chunk_index] * len(event_coords),
+            'event_lat': event_df['lat'],
+            'event_long': event_df['long'],
+            'min_distance': min_distances
+        })
+        checkpoint_df.to_csv(checkpoint_file, index=False)
+        
+        print(f"Checkpoint saved at chunk {chunk_index}, first 5 distances: {min_distances[:5]}")
+        
+        # Move to the next chunk
+        chunk_index += 1
+
+# Add the minimum distance to the event DataFrame
+event_df['min_distance_to_water'] = min_distances
+
+# Output the event DataFrame with the minimum distance column
+final_output_file = 'event_min_distances.csv'
+event_df.to_csv(final_output_file, index=False)
+print(f"Final output saved to {final_output_file}")
+
+
+
+
+
+
+
+
+
+
+
 
 import pandas as pd
 import numpy as np
