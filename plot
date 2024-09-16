@@ -1,3 +1,26 @@
+
+### event occurrence by distance
+bins =[0, 50, 100, 150, 200, 250, 300,350, 400, 500, 550]
+labels =['0-50', '50-100', '100-150', '150-200', '200-250', '250-300', '300-350', '350-400', "400-450", ">450" ]
+minimum_distance_outages['distance_bin'] = pd.cut(minimum_distance_outages['min_distance_to_water'], bins=bins, labels =labels, right=False)
+event_counts = minimum_distance_outages['distance_bin'].value_counts().sort_index()
+
+## plot results 
+
+fig = px.line(event_counts,
+             x=event_counts.index.astype(str),
+             y=event_counts.values,
+             labels={'x': "Distance from water", 'y':"Number of events"}, 
+             title= "Occurrence of events relative to distance to water ")
+
+fig.update_traces(mode ="lines+markers")
+fig.show()
+
+
+
+
+
+
 plot minimum distance
 
 
