@@ -16,6 +16,44 @@ fig = px.line(event_counts,
 fig.update_traces(mode ="lines+markers")
 fig.show()
 
+##################
+add range of distance
+import pandas as pd
+import plotly.express as px
+
+# Assuming minimum_distance_outages DataFrame and bins/labels are already defined
+
+# Assign the distances to bins
+minimum_distance_outages['distance_bin'] = pd.cut(minimum_distance_outages['min_distance_to_water'], bins=bins, labels=labels, right=False)
+
+# Calculate event counts for each bin
+event_counts = minimum_distance_outages['distance_bin'].value_counts().sort_index()
+
+# Calculate the min and max distance for each bin
+distance_range = minimum_distance_outages.groupby('distance_bin')['min_distance_to_water'].agg([min, max])
+
+# Create text labels for the plot that include event counts and distance ranges
+event_text = [f"{label}: {count} events (range: {dist_min:.1f}-{dist_max:.1f})"
+              for label, count, dist_min, dist_max in zip(event_counts.index.astype(str), 
+                                                         event_counts.values, 
+                                                         distance_range['min'], 
+                                                         distance_range['max'])]
+
+# Plot the results with event count and distance range as text
+fig = px.line(
+    event_counts,
+    x=event_counts.index.astype(str),
+    y=event_counts.values,
+    labels={'x': "Distance from water", 'y': "Number of events"},
+    title="Occurrence of events relative to distance to water",
+    text=event_text  # Add the event count and range as text for each point
+)
+
+# Update the trace to display markers, lines, and the text permanently
+fig.update_traces(mode="lines+markers+text", textposition="top center")
+
+# Show the plot
+fig.show()
 
 
 
