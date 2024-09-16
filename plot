@@ -55,6 +55,52 @@ fig.update_traces(mode="lines+markers+text", textposition="top center")
 # Show the plot
 fig.show()
 
+------------------------
+import plotly.graph_objects as go
+import pandas as pd
+
+# Assuming minimum_distance_outages DataFrame and bins/labels are already defined
+
+# Assign the distances to bins
+minimum_distance_outages['distance_bin'] = pd.cut(minimum_distance_outages['min_distance_to_water'], bins=bins, labels=labels, right=False)
+
+# Calculate event counts for each bin
+event_counts = minimum_distance_outages['distance_bin'].value_counts().sort_index()
+
+# Calculate the min, max, and median distance for each bin
+distance_stats = minimum_distance_outages.groupby('distance_bin')['min_distance_to_water'].agg(['min', 'max', 'median'])
+
+# Create the figure using error bars for the min and max
+fig = go.Figure()
+
+# Add trace for the median distances with error bars showing min and max
+fig.add_trace(go.Scatter(
+    x=event_counts.index.astype(str),  # Bin labels
+    y=distance_stats['median'],  # Median distances
+    error_y=dict(
+        type='data',  # Data-based error bars
+        symmetric=False,  # Asymmetric (different min and max)
+        array=distance_stats['max'] - distance_stats['median'],  # Distance from median to max
+        arrayminus=distance_stats['median'] - distance_stats['min'],  # Distance from median to min
+        visible=True
+    ),
+    mode='markers+lines',  # Lines and markers
+    marker=dict(size=10, color='blue'),
+    line=dict(dash='dash'),  # Dashed lines to connect points
+    name='Distance range (min-max)',
+    hovertemplate='<b>Distance Bin: %{x}</b><br>Median: %{y}<br>Min: %{error_y.arrayminus:.1f}<br>Max: %{error_y.array:.1f}<extra></extra>',
+))
+
+# Customize the layout
+fig.update_layout(
+    title="Distance from Water with Min-Max Range for Each Bin",
+    xaxis_title="Distance Bin",
+    yaxis_title="Distance (min-max range)",
+    showlegend=True
+)
+
+# Show the plot
+fig.show()
 
 
 
