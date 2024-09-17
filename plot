@@ -1,3 +1,91 @@
+import plotly.graph_objects as go
+import pandas as pd
+
+# Example DataFrames (replace these with your actual DataFrames)
+df1 = pd.DataFrame({
+    'min_distance_to_water': [10, 60, 110, 150, 210, 250, 270, 310, 350, 400, 420, 460, 500, 520, 540]
+})
+
+df2 = pd.DataFrame({
+    'min_distance_to_water': [5, 55, 105, 155, 205, 255, 305, 355, 405, 455, 505, 515, 525]
+})
+
+# Define bins and labels
+bins = [0, 50, 100, 150, 200, 250, 300, 350, 400, 500, 550]
+labels = ['0-50', '50-100', '100-150', '150-200', '200-250', '250-300', '300-350', '350-400', '400-500', '>500']
+
+# Function to process DataFrame and generate event counts
+def process_df(df, label):
+    df['distance_bin'] = pd.cut(df['min_distance_to_water'], bins=bins, labels=labels, right=False)
+    event_counts = df['distance_bin'].value_counts().sort_index()
+    return pd.DataFrame({
+        'distance_bin': event_counts.index.astype(str),
+        'Number of Events': event_counts.values,
+        'Dataset': label
+    })
+
+# Process each DataFrame
+df1_processed = process_df(df1, 'Dataset 1')
+df2_processed = process_df(df2, 'Dataset 2')
+
+# Create traces
+trace1 = go.Scatter(
+    x=df1_processed['distance_bin'],
+    y=df1_processed['Number of Events'],
+    mode='lines+markers',
+    name='Dataset 1',
+    yaxis='y2'  # Secondary y-axis
+)
+
+trace2 = go.Scatter(
+    x=df2_processed['distance_bin'],
+    y=df2_processed['Number of Events'],
+    mode='lines+markers',
+    name='Dataset 2',
+    yaxis='y'
+)
+
+# Create the figure
+fig = go.Figure()
+
+# Add traces
+fig.add_trace(trace1)
+fig.add_trace(trace2)
+
+# Update layout
+fig.update_layout(
+    title="Occurrence of Events Relative to Distance to Water",
+    xaxis_title="Distance from Water",
+    yaxis_title="Number of Events (Dataset 2)",
+    yaxis2=dict(
+        title="Number of Events (Dataset 1)",
+        overlaying='y',
+        side='right'
+    ),
+    showlegend=True
+)
+
+# Show the plot
+fig.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 outage and ignition plot into one
 import plotly.express as px
 import pandas as pd
