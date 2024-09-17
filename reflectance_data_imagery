@@ -1,4 +1,4 @@
-from rasterio.features import rasterize
+rom rasterio.features import rasterize
 from rasterio.windows import Window
 import tqdm
 
@@ -50,3 +50,23 @@ for bs in BOX_SIZE:
 #             cnt += len(bboxes_dict['indexes'])
 #             print(cnt)
            
+
+#             for bbox_size in BOX_SIZE:
+#                 for bbox, bbox_ix, tid in zip(bboxes_dict[bbox_size], bboxes_dict['indexes'], df_metadata_snap_quad.TREEID):
+#                     if type(bbox) == np.ndarray:
+#                         bbox_name = f"{tid}_{bbox_ix[0]}-{bbox_ix[1]}"
+#                         filename = f"{snapshot_date_str}_{bbox_name}.npy"
+#                         # print(tid)
+
+#                         wpath = os.path.join(root_wpath, bbox_size,snapshot_date_str, f"{snapshot_date_str}_{bbox_name}.npy") 
+#                         # print(wpath)
+#                         np.save(wpath, bbox)
+#                         writing_metadata[tid] = [snapshot_date_str, bbox_name, filename]
+#                         # filename = os.path.basename(wpath)
+#                         # # print(filename)
+#                         # writing_metadata[filename]=filename
+#                     else:
+#                         writing_metadata[tid] = 'invalid_pix'
+#                     # print(writing_metadata[filename])
+
+#             # print(tree_point_geoms)
