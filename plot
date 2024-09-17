@@ -1,3 +1,28 @@
+import pandas as pd
+
+# Define the range for the bins
+start = 1
+end = 500
+bin_size = 10
+
+# Generate bins from 1 to 500 with size 10
+bins = list(range(start, end + bin_size, bin_size))
+
+# Create labels for each bin
+labels = [f'{i}-{i + bin_size - 1}' for i in bins[:-1]]
+
+# Example DataFrame
+df = pd.DataFrame({
+    'values': [5, 12, 23, 34, 45, 56, 67, 78, 89, 100, 150, 200, 250, 300, 400, 450, 500]
+})
+
+# Categorize 'values' into bins and assign labels
+df['binned'] = pd.cut(df['values'], bins=bins, labels=labels, right=False)
+
+# Display the DataFrame with the binned values
+print(df)
+
+
 import plotly.graph_objects as go
 import pandas as pd
 
