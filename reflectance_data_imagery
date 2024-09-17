@@ -1,0 +1,52 @@
+from rasterio.features import rasterize
+from rasterio.windows import Window
+import tqdm
+
+writing_metadata ={}
+
+root_wpath = "/data/horbjv/Imagery/data/"
+os.makedirs(root_wpath, exist_ok=True)
+
+
+BOX_SIZE = ['7b7'] #'3b3','5b5', '7b7' etc. or list = ['3b3', '7b7']
+for bs in BOX_SIZE:
+    for snapshot_date in df_metadata.ref_snapshot_quadavail.unique():
+        snapshot_date_str = np.datetime_as_string(snapshot_date, unit='D')
+        print(f'the date is: {snapshot_date_str}')
+        # try:
+        #     os.makedirs(os.path.join(root_wpath,bs, snapshot_date_str), exist_ok=True)
+        #     print(f"Directory created: {os.path.join(root_wpath,bs, snapshot_date_str)}")
+        # except Exception as e:
+        #     print(f"Failed to create directory: {os.path.join(root_wpath,bs, snapshot_date_str)}")
+        #     print(f"Error:{e}")
+            
+        df_metadata_snap = df_metadata.loc[df_metadata.ref_snapshot_quadavail == snapshot_date,:].copy()
+        # print(df_metadata_snap .head(2))
+#         print(f"Processing Snapshot: {snapshot_date} with {len(df_metadata_snap.quadid.unique())} quads and {df_metadata_snap.shape[0]} data points")
+        cnt = 0
+        for quadID in metadata_sub.quadid.unique(): 
+            print(f"{quadID} for {snapshot_date_str}")
+            df_metadata_snap_quad = df_metadata_snap.loc[df_metadata_snap.quadid == quadID,:].copy()
+            df_metadata_snap_quad.head(2)
+#             print(f"   - Processing quad {quadID} - current progress = {cnt}/{metadata_sub.shape[0]}  |  {100*cnt/metadata_sub.shape[0]:.2f}%")
+
+#             # Converting metadata to QUAD CRS 3857
+            df_metadata_snap_quad['geometry'] =df_metadata_snap_quad['geometry'].apply(lambda x: wkt.loads(x) if isinstance (x, str) else x)
+            df_metadata_snap_quad = gpd.GeoDataFrame(df_metadata_snap_quad, geometry="geometry")
+            df_metadata_snap_quad.set_crs(epsg=32610, inplace=True)
+            df_metadata_snap_quad.to_crs("epsg:3857", inplace=True)
+
+
+            quad_file = f"/data/hos1/PlanetSen8b/{snapshot_date_str}/quad/{quadID}_quad.tif"
+            print(f'the quad file for {snapshot_date_str} for {quadID} is: {quad_file}')
+            udm_file = f"/data/hos1/PlanetSen8b/{snapshot_date_str}/orthoudm2/{quadID}_orthoudm2.tif"
+            # print(udm_file)
+
+
+            quadcnt = 0
+            tree_point_geoms = df_metadata_snap_quad.geometry
+            bboxes_dict = extract_box(quad_file, udm_file, BOX_SIZE, tree_point_geoms)
+            print(bboxes_dict)
+#             cnt += len(bboxes_dict['indexes'])
+#             print(cnt)
+           
