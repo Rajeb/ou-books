@@ -1,3 +1,66 @@
+import pandas as pd
+import plotly.express as px
+from sklearn.linear_model import LinearRegression
+import numpy as np
+
+def plot_correlation_multiple(df_list, location_names, x_col, y_col):
+    fig = px.scatter(title="Correlation Between Minimum Distance and Event Occurrence")
+
+    # Iterate through each DataFrame and location name
+    for df, location_name in zip(df_list, location_names):
+        # Prepare data for regression
+        X = df[x_col].values.reshape(-1, 1)
+        y = df[y_col].values
+
+        # Perform linear regression
+        model = LinearRegression()
+        model.fit(X, y)
+
+        # Predict values for regression line
+        y_pred = model.predict(X)
+
+        # Calculate correlation
+        correlation = df[x_col].corr(df[y_col])
+
+        # Scatter plot for this location
+        scatter = px.scatter(df, x=x_col, y=y_col, labels={x_col: "Minimum Distance", y_col: "Event Occurrence"},
+                             title=f"Correlation: {correlation:.2f} ({location_name})")
+        
+        # Add traces to the main figure
+        for trace in scatter.data:
+            trace.name = location_name  # Add location name as the trace name
+            trace.showlegend = True  # Show legend for different locations
+            fig.add_trace(trace)
+        
+        # Add regression line for this location
+        fig.add_traces(px.line(x=df[x_col], y=y_pred, name=f'Regression Line ({location_name})').data)
+
+    # Update plot layout
+    fig.update_layout(
+        xaxis_title="Minimum Distance",
+        yaxis_title="Event Occurrence",
+        showlegend=True
+    )
+
+    fig.show()
+
+# Example usage with 3 different DataFrames for 3 locations
+df1 = pd.DataFrame({'minimum_distance': [1.2, 2.5, 3.0, 0.8, 1.9], 'event_occurrence': [5, 10, 15, 6, 8]})
+df2 = pd.DataFrame({'minimum_distance': [1.5, 2.0, 3.5, 0.9, 1.7], 'event_occurrence': [6, 11, 14, 5, 9]})
+df3 = pd.DataFrame({'minimum_distance': [2.1, 2.8, 3.2, 1.0, 2.0], 'event_occurrence': [4, 12, 13, 7, 10]})
+
+# List of DataFrames and location names
+df_list = [df1, df2, df3]
+location_names = ['Location 1', 'Location 2', 'Location 3']
+
+# Plot the correlations for all three locations
+plot_correlation_multiple(df_list, location_names, x_col='minimum_distance', y_col='event_occurrence')
+
+
+
+
+
+
 
 import pandas as pd
 import plotly.express as px
