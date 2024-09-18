@@ -1,3 +1,61 @@
+
+import pandas as pd
+import plotly.express as px
+from sklearn.linear_model import LinearRegression
+import numpy as np
+
+# Sample DataFrame with 'minimum_distance' and 'event_occurrence' columns
+data = {
+    'minimum_distance': [1.2, 2.5, 3.0, 0.8, 1.9],
+    'event_occurrence': [5, 10, 15, 6, 8]
+}
+df = pd.DataFrame(data)
+
+# Prepare data for regression
+X = df['minimum_distance'].values.reshape(-1, 1)
+y = df['event_occurrence'].values
+
+# Perform linear regression
+model = LinearRegression()
+model.fit(X, y)
+
+# Predict values for regression line
+y_pred = model.predict(X)
+
+# Calculate correlation
+correlation = df['minimum_distance'].corr(df['event_occurrence'])
+
+# Plot with Plotly
+fig = px.scatter(df, x='minimum_distance', y='event_occurrence', title=f'Correlation: {correlation:.2f}',
+                 labels={'minimum_distance': 'Minimum Distance', 'event_occurrence': 'Event Occurrence'})
+
+# Add regression line
+fig.add_traces(px.line(x=df['minimum_distance'], y=y_pred, name='Regression Line').data)
+
+# Customize plot
+fig.update_layout(
+    xaxis_title="Minimum Distance",
+    yaxis_title="Event Occurrence",
+    annotations=[
+        dict(
+            x=max(df['minimum_distance']), y=max(y_pred),
+            text=f"R² = {model.score(X, y):.2f}",
+            showarrow=False,
+            font=dict(size=14)
+        )
+    ]
+)
+
+# Show the plot
+fig.show()
+
+
+
+
+
+
+
+
 import pandas as pd
 
 # Define the range for the bins
