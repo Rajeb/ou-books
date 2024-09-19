@@ -1,3 +1,130 @@
+import pandas as pd
+import plotly.graph_objects as go
+
+# Sample DataFrame
+data = {
+    'outage_date': ['2024-09-15', '2024-09-16', '2024-09-16', '2024-09-17', '2024-09-18'],
+    'ignition_date': ['2024-09-15', '2024-09-16', None, '2024-09-17', '2024-09-18'],
+    'ignition_ind': [1, 1, 0, 1, 1]
+}
+df = pd.DataFrame(data)
+
+# Convert the date columns to datetime format
+df['outage_date'] = pd.to_datetime(df['outage_date'])
+df['ignition_date'] = pd.to_datetime(df['ignition_date'])
+
+# Count outages and ignitions per day
+outage_count = df.groupby('outage_date').size().reset_index(name='outage_count')
+ignition_count = df[df['ignition_ind'] == 1].groupby('ignition_date').size().reset_index(name='ignition_count')
+
+# Combine both counts
+daily_counts = pd.merge(outage_count, ignition_count, left_on='outage_date', right_on='ignition_date', how='outer').fillna(0)
+
+import pandas as pd
+import plotly.graph_objects as go
+
+# Sample DataFrame
+data = {
+    'outage_date': ['2022-09-15', '2023-09-16', '2023-09-16', '2024-09-17', '2024-09-18'],
+    'ignition_date': ['2022-09-15', '2023-09-16', None, '2024-09-17', '2024-09-18'],
+    'ignition_ind': [1, 1, 0, 1, 1]
+}
+df = pd.DataFrame(data)
+
+# Convert the date columns to datetime format
+df['outage_date'] = pd.to_datetime(df['outage_date'])
+df['ignition_date'] = pd.to_datetime(df['ignition_date'])
+
+# Count outages and ignitions per day
+outage_count_per_day = df.groupby('outage_date').size().reset_index(name='outage_count')
+ignition_count_per_day = df[df['ignition_ind'] == 1].groupby('ignition_date').size().reset_index(name='ignition_count')
+
+# Combine both counts
+daily_counts = pd.merge(outage_count_per_day, ignition_count_per_day, left_on='outage_date', right_on='ignition_date', how='outer').fillna(0)
+
+# Create stacked bar chart for each day
+fig = go.Figure()
+
+# Add outages as the first trace
+fig.add_trace(go.Bar(
+    x=daily_counts['outage_date'],
+    y=daily_counts['outage_count'],
+    name='Outages'
+))
+
+# Add ignitions as the second trace
+fig.add_trace(go.Bar(
+    x=daily_counts['outage_date'],
+    y=daily_counts['ignition_count'],
+    name='Ignitions'
+))
+
+# Update layout to stack the bars and format x-axis labels by month
+fig.update_layout(
+    barmode='stack',
+    title='Outages and Ignitions per Day with X-axis as Month Labels',
+    xaxis_title='Date',
+    yaxis_title='Count',
+    xaxis=dict(
+        tickmode='array', 
+        tickvals=pd.date_range(start=df['outage_date'].min(), end=df['outage_date'].max(), freq='MS'),
+        tickformat='%Y-%m'  # Format x-axis labels as Year-Month
+    ),
+    template='plotly_white'
+)
+
+fig.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Create stacked bar chart
+fig = go.Figure()
+
+# Add outages as the first trace
+fig.add_trace(go.Bar(
+    x=daily_counts['outage_date'],
+    y=daily_counts['outage_count'],
+    name='Outages'
+))
+
+# Add ignitions as the second trace
+fig.add_trace(go.Bar(
+    x=daily_counts['outage_date'],
+    y=daily_counts['ignition_count'],
+    name='Ignitions'
+))
+
+# Update layout to stack the bars
+fig.update_layout(
+    barmode='stack',
+    title='Outages and Ignitions per Day',
+    xaxis_title='Date',
+    yaxis_title='Count',
+    xaxis=dict(tickformat='%Y-%m-%d'),
+    template='plotly_white'
+)
+
+fig.show()
+
+
+
+
 
 
 r3_failures_hf = r3_ignitions[((r3_ignitions['hftd']==1) | 
