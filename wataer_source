@@ -1,3 +1,25 @@
+
+event_coords = df_events[['lat', 'lon']].to_numpy()
+# event_coords = df_events[['fire_latitude', 'fire_longitude']].to_numpy()
+
+from math import radians, cos, sin, sqrt, atan2
+def haversine(lat1, lon1, lat2, lon2):
+    R = 637100
+    lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
+    dlat = lat2-lat1
+    dlon = lon2 -lon1
+    
+    a =sin(dlat/2)**2  + cos(lat2) * sin(dlon/2)**2
+    c = 2 *atan2(sqrt(a), sqrt(1-a))
+    return R * c
+
+
+
+
+
+
+
+
 # Add the top 10 minimum distances to the event DataFrame
 for i in range(10):
     event_df[f'top_{i+1}_min_distance'] = top_10_distances[:, i]
