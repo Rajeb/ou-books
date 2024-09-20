@@ -13,7 +13,34 @@ def haversine(lat1, lon1, lat2, lon2):
     c = 2 *atan2(sqrt(a), sqrt(1-a))
     return R * c
 
+def calculate_min_distance(event_coords, water_df_chunk):
+    filtered_water_chunk = water_df_chunk[water_df_chunk['value'] > 200]
+    water_coords = water_df_chunk[['latitude', 'longitude']].to_numpy()
+    
+    # Build a spatial index (KDTree) for the water points
+    tree = cKDTree(water_coords)
+    
+    
+    
+    # Query the tree for the nearest water point for each event
+    _, indices = tree.query(event_coords)
+    
+    # distances = np.zeros((len(event_coords),10))
+    
+    distances = [
+         haversine(event_coords[i][0], event_coords[i][1], water_coords[indices[i]][0], water_coords[indices[i]][1])
+         
+        for i in range(len(event_coords))
+    ]
+#     for i in range(len(event_coords)):
+#         for j in range(10):    
+#             distances[i,j] = [
+#                 haversine(event_coords[i][0], event_coords[i][1], water_coords[indices[i][j]][0], water_coords[indices[i][j]][1])
 
+#                                                                               ]
+    # top_10_distances = [sorted(d)[:10] for d in distances]
+    # Return the minimum distance for each event
+    return np.array(distances)
 
 
 
