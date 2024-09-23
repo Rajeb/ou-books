@@ -1,3 +1,62 @@
+________________________________ yearly boxplot__________________
+import pandas as pd
+import numpy as np
+import plotly.express as px
+import plotly.graph_objects as go
+
+# Generating new data to cover 2015-2024
+data = {
+    'outage_date': pd.date_range(start='2015-01-01', periods=1000, freq='M').tolist(),
+    'min_distance': np.random.rand(1000).tolist()
+}
+
+# Create a new dataframe and add year and month columns
+df_full = pd.DataFrame(data)
+df_full['outage_date'] = pd.to_datetime(df_full['outage_date'])
+df_full['year'] = df_full['outage_date'].dt.year
+df_full['month'] = df_full['outage_date'].dt.month
+
+# Data for 2022 and 2024 separately
+df_2022_2024 = df_full[df_full['year'].isin([2022, 2024])]
+
+# Step 1: Overall Plot (2015-2024)
+fig = px.box(df_full, x='month', y='min_distance', title='Overall Box Plot of Minimum Distance (2015-2024)')
+# Calculate and overlay the mean distance
+mean_distances = df_full.groupby('month')['min_distance'].mean().reset_index()
+fig.add_trace(go.Scatter(x=mean_distances['month'], y=mean_distances['min_distance'], mode='markers+lines', 
+                         name='Mean Distance', marker=dict(color='red', size=8)))
+
+fig.update_layout(xaxis_title='Month', yaxis_title='Minimum Distance')
+fig.show()
+
+# Step 2: Plot for 2022 and 2024
+fig2 = px.box(df_2022_2024, x='month', y='min_distance', color='year', title='Box Plot of Minimum Distance (2022 and 2024)')
+# Calculate and overlay the mean distance for each year
+mean_distances_2022_2024 = df_2022_2024.groupby(['month', 'year'])['min_distance'].mean().reset_index()
+
+# Overlay mean distance for 2022 and 2024
+for year in [2022, 2024]:
+    mean_data = mean_distances_2022_2024[mean_distances_2022_2024['year'] == year]
+    fig2.add_trace(go.Scatter(x=mean_data['month'], y=mean_data['min_distance'], mode='markers+lines', 
+                              name=f'Mean Distance {year}', marker=dict(size=8)))
+
+fig2.update_layout(xaxis_title='Month', yaxis_title='Minimum Distance')
+fig2.show()
+___________________________________________________
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import pandas as pd
 import plotly.express as px
 from sklearn.linear_model import LinearRegression
