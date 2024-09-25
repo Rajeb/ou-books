@@ -1,3 +1,64 @@
+import pandas as pd
+import geopandas as gpd
+from shapely.geometry import Point
+import re
+
+# Function to convert various formats to decimal degrees
+def convert_to_decimal(coord):
+    # Check for plain integer (consider it as decimal degrees)
+    if isinstance(coord, (int, float)):
+        return float(coord)
+
+    # Check if the coordinate is in DMS format
+    dms_match = re.match(r'(\d+)d(\d+),?(\d+)?m?', coord)
+    if dms_match:
+        degrees = float(dms_match.group(1))
+        minutes = float(dms_match.group(2))
+        return degrees + minutes / 60
+
+    # Check if the coordinate is in decimal degrees with degree symbol
+    degree_symbol_match = re.match(r'(\d+)°?\s*(\d+\.?\d*)?', coord)
+    if degree_symbol_match:
+        degrees = float(degree_symbol_match.group(1))
+        if degree_symbol_match.group(2):  # Check if there are decimal parts
+            return degrees + float(degree_symbol_match.group(2)) / 60
+        return degrees
+
+    return None  # Return None if format is unrecognized
+
+# Sample DataFrame with latitude and longitude
+data = {
+    'lat': ['38d38,066m', '35° 49.262', '315991', '91d00,00m'],  # Invalid: 91d00,00m
+    'lon': ['77d00,12m', '180° 01.12', '240001', '200d00,00m']  # Invalid: 200d00,00m
+}
+df = pd.DataFrame(data)
+
+# Convert lat/lon to decimal degrees
+df['lat'] = df['lat'].apply(convert_to_decimal)
+df['lon'] = df['lon'].apply(convert_to_decimal)
+
+# Check for valid lat/lon
+valid_lat = df['lat'].between(-90, 90)
+valid_lon = df['lon'].between(-180, 180)
+
+# Add a column to indicate validity
+df['valid'] = valid_lat & valid_lon
+
+# Filter valid coordinates
+valid_df = df[df['valid']
+
+# Convert to GeoDataFrame
+geometry = [Point(xy) for xy in zip(valid_df['lon'], valid_df['lat'])]
+gdf = gpd.GeoDataFrame(valid_df, geometry=geometry)
+
+# Set the CRS of the original points (e.g., WGS84)
+gdf.crs = "EPSG:4326"  # WGS84
+
+# Convert to a different CRS (e.g., UTM zone 33N)
+gdf_converted = gdf.to_crs("EPSG:32633")
+
+# Display the converted GeoDataFrame
+print(gdf_converted)
 
 
 
