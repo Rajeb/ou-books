@@ -1,4 +1,112 @@
-rom rasterio.features import rasterize
+__________________________________________________
+from rasterio.features import rasterize
+from rasterio.windows import Window
+import tqdm
+
+writing_metadata ={}
+
+root_wpath = "/data/horbjv/Imagery/data/"
+os.makedirs(root_wpath, exist_ok=True)
+
+
+BOX_SIZE = ['7b7'] #'3b3','5b5', '7b7' etc. or list = ['3b3', '7b7']
+for bs in BOX_SIZE:    
+        try:
+            os.makedirs(os.path.join(root_wpath,bs), exist_ok=True)
+            print(f"Directory created: {os.path.join(root_wpath,bs, snapshot_date)}")
+        except Exception as e:
+            print(f"Failed to create directory: {os.path.join(root_wpath,bs)}")
+            print(f"Error:{e}")
+for snapshot_date in df_metadata.date_availabe.unique():
+        # snapshot_date_str = np.datetime_as_string(snapshot_date, unit='D')
+        print(f'the date is: {snapshot_date}')
+            
+        df_metadata_snap = df_metadata.loc[df_metadata.date_availabe == snapshot_date,:].copy()
+        # print(df_metadata_snap.quadid.unique())
+        print(f"Processing Snapshot: {snapshot_date} with {len(df_metadata_snap.quadid.unique())} quads and {df_metadata_snap.shape[0]} data points")
+        cnt = 0
+        for quadID in df_metadata_snap.quadid.unique():
+            # print(f"{quadID} for {snapshot_date_str}")
+            # print(quadID)
+            df_metadata_snap_quad = df_metadata_snap.loc[df_metadata_snap.quadid == quadID,:].copy()
+            # print(df_metadata_snap_quad.head(2))
+            print(f"   - Processing quad {quadID} - current progress = {cnt}/{df_metadata.shape[0]}  |  {100*cnt/df_metadata.shape[0]:.2f}%")
+
+            # Converting metadata to QUAD CRS 3857
+            df_metadata_snap_quad['geometry'] =df_metadata_snap_quad['geometry'].apply(lambda x: wkt.loads(x) if isinstance (x, str) else x)
+            df_metadata_snap_quad = gpd.GeoDataFrame(df_metadata_snap_quad, geometry="geometry")
+            df_metadata_snap_quad.set_crs(epsg=32610, inplace=True)
+            df_metadata_snap_quad.to_crs("epsg:3857", inplace=True)
+
+
+            quad_file = f"/data/hos1/PlanetSen8b/{snapshot_date}/quad/{quadID}_quad.tif"
+            # print(f'the quad file for {snapshot_date} for {quadID} is: {quad_file}')
+            udm_file = f"/data/hos1/PlanetSen8b/{snapshot_date}/orthoudm2/{quadID}_orthoudm2.tif"
+            # print(udm_file)
+
+
+            quadcnt = 0
+            tree_point_geoms = df_metadata_snap_quad.geometry
+            # print(tree_point_geoms)
+            bboxes_dict = extract_box(quad_file, udm_file, BOX_SIZE, tree_point_geoms)
+            # print(bboxes_dict)
+            cnt += len(bboxes_dict['indexes'])
+            # print(cnt)
+
+
+            for bbox_size in BOX_SIZE:
+                for bbox, bbox_ix, tid in zip(bboxes_dict[bbox_size], bboxes_dict['indexes'], df_metadata_snap_quad.TREEID):
+                    if type(bbox) == np.ndarray:
+                        bbox_name = f"{tid}_{bbox_ix[0]}-{bbox_ix[1]}"
+                        filename = f"{snapshot_date}_{bbox_name}.npy"
+                        # print(tid)
+
+                        wpath = os.path.join(root_wpath, bbox_size,f"{snapshot_date}_{bbox_name}.npy") 
+                        # print(wpath)
+                        np.save(wpath, bbox)
+                        writing_metadata[tid] = [snapshot_date, bbox_name, filename]
+                        filename = os.path.basename(wpath)
+                        # print(filename)
+                        writing_metadata[filename]=filename
+                    else:
+                        writing_metadata[tid] = 'invalid_pix'
+                    # print(writing_metadata[filename])
+
+
+wmeta_df = pd.DataFrame.from_dict(writing_metadata, orient = 'index').reset_index()
+wmeta_df = wmeta_df[['index', 1,2]]
+wmeta_df.columns = ['treeid','bbox_name', 'filename']
+# print(wmeta_df.shape)
+wmeta_df.head()
+---------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+from rasterio.features import rasterize
 from rasterio.windows import Window
 import tqdm
 
