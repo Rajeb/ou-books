@@ -1,0 +1,67 @@
+import plotly.graph_objects as go
+import plotly.express as px
+import geopandas as gpd
+
+# Load the bird species DataFrame (replace with your actual data)
+# df = pd.DataFrame({
+#     'bird_species': ['Species A', 'Species B', 'Species A', 'Species C'],
+#     'lat': [34.05, 36.16, 35.68, 33.95],
+#     'lon': [-118.25, -115.15, -120.74, -117.75]
+# })
+
+# Load the hftd_df and hrfra_df (replace with your actual data)
+# These DataFrames should be GeoDataFrames containing a 'geometry' column
+# hftd_df = gpd.read_file('path_to_hftd_shapefile.shp')
+# hrfra_df = gpd.read_file('path_to_hrfra_shapefile.shp')
+
+# Initialize the base map with bird species points
+fig = px.scatter_mapbox(df, 
+                        lat="lat", 
+                        lon="lon", 
+                        color="bird_species", 
+                        hover_name="bird_species",
+                        zoom=5, 
+                        height=600,
+                        mapbox_style="carto-positron")
+
+# Function to extract lat/lon from shapely Polygon or MultiPolygon
+def get_polygon_coords(polygon):
+    if polygon.geom_type == 'Polygon':
+        x, y = polygon.exterior.xy
+        return list(zip(y, x))  # Return lat, lon tuples
+    elif polygon.geom_type == 'MultiPolygon':
+        coords = []
+        for poly in polygon:
+            x, y = poly.exterior.xy
+            coords.extend(list(zip(y, x)))  # Collect all polygon coordinates
+        return coords
+
+# Add HFTD layer (Layer 2 - polygons)
+for polygon in hftd_df['geometry']:
+    coords = get_polygon_coords(polygon)
+    fig.add_trace(go.Scattermapbox(
+        fill="toself",
+        lon=[coord[1] for coord in coords],  # Longitude values
+        lat=[coord[0] for coord in coords],  # Latitude values
+        marker={'size': 0},  # No markers for the polygon
+        fillcolor="rgba(255, 0, 0, 0.3)",  # Red fill with transparency
+        line={'width': 1, 'color': 'red'},  # Polygon boundary
+        name="HFTD Polygon"
+    ))
+
+# Add HRFRA layer (Layer 3 - polygons)
+for polygon in hrfra_df['geometry']:
+    coords = get_polygon_coords(polygon)
+    fig.add_trace(go.Scattermapbox(
+        fill="toself",
+        lon=[coord[1] for coord in coords],  # Longitude values
+        lat=[coord[0] for coord in coords],  # Latitude values
+        marker={'size': 0},  # No markers for the polygon
+        fillcolor="rgba(0, 0, 255, 0.3)",  # Blue fill with transparency
+        line={'width': 1, 'color': 'blue'},  # Polygon boundary
+        name="HRFRA Polygon"
+    ))
+
+# Show the map with multiple layers
+fig.update_layout(mapbox_zoom=5, mapbox_center={"lat": 35, "lon": -119})
+fig.show()
