@@ -32,3 +32,20 @@ Data Coverage: Current research often suffers from limited coverage, focusing on
 Data Diversity: Studies commonly use specific types of remote sensing data (e.g., LiDAR, multispectral imagery), but the lack of diversity in data sources can impact model performance. For example, hyperspectral imagery, while rich in spectral information, is often underutilized in large-scale studies due to its high dimensionality and complexity (MDPI, 2023). Additionally, incorporating temporal data and considering seasonal changes in vegetation reflectance could further enhance the accuracy and reliability of classification models.
 
 In conclusion, addressing these gaps—expanding the scale of data, broadening species coverage, and diversifying the types of data used—will significantly enhance the applicability and precision of tree species identification for wildfire mitigation and forest management.
+
+
+
+
+
+
+
+
+Data Integration and Fusion: While multimodal models, which integrate data from different sensors (e.g., LiDAR, multispectral, hyperspectral), have shown promise, integrating these diverse data sources efficiently remains a challenge. Differences in data resolution, scale, and dimensionality can cause issues when attempting to fuse them for species-level classification. Effective fusion strategies that can handle this variability are still underdeveloped, limiting the full potential of multimodal deep learning models (MDPI, 2023; Remote Sens., 2023).
+
+Model Generalization and Overfitting: A key challenge is the generalization of deep learning models trained on specific datasets to new, unseen regions or species. Multimodal architectures tend to overfit when trained on small, region-specific datasets, reducing their effectiveness in large-scale, diverse environments. Research is needed to develop robust models that can perform consistently across different geographical areas with varying species compositions (Remote Sens., 2023).
+
+Temporal Dynamics: Another gap is the integration of temporal data into multimodal architectures. While many studies focus on static images or point clouds, the ability to incorporate temporal changes in tree structures or environmental conditions into models remains underexplored. Leveraging time-series data, such as seasonal changes in vegetation reflectance, could improve the accuracy and adaptability of species identification models (MDPI, 2023).
+
+Model Efficiency and Scalability: Deep learning models, especially multimodal architectures, are often computationally expensive, which limits their scalability to large datasets. There is a need for more efficient algorithms and architectures that can process large-scale remote sensing data in real time or near real-time without compromising accuracy (Remote Sens., 2023).
+
+In conclusion, addressing these gaps—focusing on better data integration, improving model generalization, incorporating temporal information, and enhancing model efficiency—will be essential to advancing multimodal deep learning techniques for tree species identification, particularly in large-scale forest management and wildfire mitigation applications.
