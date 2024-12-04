@@ -49,3 +49,9 @@ Temporal Dynamics: Another gap is the integration of temporal data into multimod
 Model Efficiency and Scalability: Deep learning models, especially multimodal architectures, are often computationally expensive, which limits their scalability to large datasets. There is a need for more efficient algorithms and architectures that can process large-scale remote sensing data in real time or near real-time without compromising accuracy (Remote Sens., 2023).
 
 In conclusion, addressing these gaps—focusing on better data integration, improving model generalization, incorporating temporal information, and enhancing model efficiency—will be essential to advancing multimodal deep learning techniques for tree species identification, particularly in large-scale forest management and wildfire mitigation applications.
+
+
+
+
+
+In this study, we present an approach for national tree species mapping based on S1/S2 time series and national forest inventory data to provide a foundation for future consistent European-wide species mapping efforts. We test our approach for the area of Germany using field data from variable-radius plots of the German National Forest Inventory (NFI). Specifically, we address the following research questions:  1. Which accuracies can be achieved on a national scale when combining NFI observations with S1 and S2 time series data and environmental conditions for mapping major tree species groups? 2. How different are the classification accuracies between homogenous pure-species and mixed-species forest stands? 3. How do the mapped species areas compare to NFI-based area estimates?
