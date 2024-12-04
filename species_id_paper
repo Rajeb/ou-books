@@ -55,3 +55,13 @@ In conclusion, addressing these gaps—focusing on better data integration, impr
 
 
 In this study, we present an approach for national tree species mapping based on S1/S2 time series and national forest inventory data to provide a foundation for future consistent European-wide species mapping efforts. We test our approach for the area of Germany using field data from variable-radius plots of the German National Forest Inventory (NFI). Specifically, we address the following research questions:  1. Which accuracies can be achieved on a national scale when combining NFI observations with S1 and S2 time series data and environmental conditions for mapping major tree species groups? 2. How different are the classification accuracies between homogenous pure-species and mixed-species forest stands? 3. How do the mapped species areas compare to NFI-based area estimates?
+
+
+objectives"
+
+In this study, we propose an approach for tree species mapping within the PG&E service territory using terrestrial LiDAR data and 8-band reflectance data. This mapping effort aims to provide a solid foundation for wildfire risk mitigation programs. Specifically, we address the following research questions:
+
+How accurate can deep learning architectures based on LiDAR data achieve when combined with tree inventory data collected at ground level for mapping tree species within the service territory?
+How do classification accuracies compare between models using only LiDAR data, multispectral reflectance data, and a combination of both when evaluated against ground truth data?
+Are there certain tree species that perform better in classification than others, and do specific approaches (LiDAR-based, reflectance-based, or combined) yield superior results for certain species?
+This approach will contribute to refining wildfire risk management strategies by enhancing the accuracy of tree species identification and improving vegetation risk assessmen
