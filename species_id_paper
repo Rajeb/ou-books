@@ -16,3 +16,19 @@ Automation and Efficiency: Manual segmentation of individual trees from remote s
 Dimensionality Reduction and Feature Selection: While hyperspectral data provide rich information, they also introduce high dimensionality. Identifying the most relevant features for tree species classification while reducing computational complexity remains a significant gap (MDPI, 2023).
 
 Future research should focus on refining data fusion techniques, enhancing model robustness across various environments, and improving automation in species classification workflows to address these gaps.
+
+
+
+
+
+
+
+
+
+Data Scale: Many studies have focused on small-scale datasets or individual sites, limiting the generalizability of models to broader landscapes. Although some models achieve high accuracy in controlled environments, they often fail when applied to larger, more heterogeneous regions due to variations in species composition, canopy structure, and environmental factors (MDPI, 2023). Expanding datasets to cover large, diverse geographical areas is essential for improving model robustness.
+
+Data Coverage: Current research often suffers from limited coverage, focusing on specific tree species or forest types. This narrow focus may not adequately address the wide variety of tree species present in different ecosystems (Remote Sens., 2023). To create universal models for tree species classification, more comprehensive datasets that include a broad range of species, from temperate to tropical forests, are needed.
+
+Data Diversity: Studies commonly use specific types of remote sensing data (e.g., LiDAR, multispectral imagery), but the lack of diversity in data sources can impact model performance. For example, hyperspectral imagery, while rich in spectral information, is often underutilized in large-scale studies due to its high dimensionality and complexity (MDPI, 2023). Additionally, incorporating temporal data and considering seasonal changes in vegetation reflectance could further enhance the accuracy and reliability of classification models.
+
+In conclusion, addressing these gaps—expanding the scale of data, broadening species coverage, and diversifying the types of data used—will significantly enhance the applicability and precision of tree species identification for wildfire mitigation and forest management.
