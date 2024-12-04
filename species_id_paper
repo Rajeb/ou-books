@@ -1,2 +1,18 @@
 Qian, C., Yao, C., Ma, H., Xu, J., & Wang, J. (2023). Tree species classification using airborne lidar data based on individual tree segmentation and shape fitting. Remote Sensing, 15(2), 406.
 Chen, C., Jing, L., Li, H., Tang, Y., & Chen, F. (2023). Individual Tree Species Identification Based on a Combination of Deep Learning and Traditional Features. Remote Sensing, 15(9), 2301.
+
+
+Searched 3 sites
+Research on tree species identification at the species level has made significant progress using LiDAR, multispectral, and hyperspectral imagery. However, there are several notable research gaps:
+
+Data Fusion Challenges: Integrating multiple sensor types like LiDAR and hyperspectral imagery requires advanced methods to harmonize different data formats and resolutions. The variability in spatial, temporal, and spectral characteristics complicates effective fusion, limiting species-level classification accuracy (MDPI, 2023).
+
+Within-Species Variability: High variability in leaf reflectance, crown shapes, and growth forms within the same species presents a challenge for machine learning models. More research is needed to address how these variations affect classification accuracy, especially in complex forest environments (MDPI, 2023).
+
+Limited Generalizability Across Regions: Models trained in one geographical area often struggle to generalize to others due to differences in species composition, canopy structures, and environmental conditions. Developing universally applicable models remains a challenge (MDPI, 2023).
+
+Automation and Efficiency: Manual segmentation of individual trees from remote sensing data is labor-intensive. Although automated approaches using machine learning are emerging, achieving high accuracy consistently across diverse forest types is still difficult (Remote Sens., 2023).
+
+Dimensionality Reduction and Feature Selection: While hyperspectral data provide rich information, they also introduce high dimensionality. Identifying the most relevant features for tree species classification while reducing computational complexity remains a significant gap (MDPI, 2023).
+
+Future research should focus on refining data fusion techniques, enhancing model robustness across various environments, and improving automation in species classification workflows to address these gaps.
