@@ -27,7 +27,11 @@ Within each fire of interest, we downloaded all PlanetScope imagery from May 1 t
 D.J. Dixon et al.
 Remote Sensing of Environment 298 (2023) 113842
 spectral inconsistencies between image dates and sensors, we applied a harmonization function provided by Planet to approximately match the Sentinel-2 spectral response for each image. Monthly median com- posites from May to October were calculated for a pre-fire year and a post-fire year defined by the year of the fire and the timing of each NAIP acquisition. This use of median composites minimizes the potential layover effects between PlanetScope images or undetected noise within single images. Pre-fire PlanetScope imagery were gathered for the first year before the fire year, and post-fire imagery for the first (3/15 fires) or second (12/15) year after the fire to temporally align with NAIP manual canopy labeling (S1 Table). Although rare, there were cases of zero clear sky pixels occurring over the course of an entire month; this occurred with 0.035% of pixels across all training, validation and test quadrants. For those cases, we used the subsequent or closest monthly composite for gap filling, and the final product includes a quality flag to note those cases. S2 and S3 Figures show density plots of image date counts, cases of zero image gaps, and the timing of image acquisitions used for each month and ecoregion.
+----
+paraphrase
+Our deep learning model uses PlanetScope satellite imagery (4-band RGB/NIR, 3-m resolution) to detect forest canopy survival and mortality. PlanetScope's high spatial resolution and near-daily temporal frequency allow for observing individual canopies and capturing pre- and post-disturbance variability. For each fire event, we downloaded imagery from May to October with <70% cloud cover, solar elevation ≥10°, and "standard" quality per Planet's metadata.
 
+Imagery was pre-processed using Planet's Usable Data Mask 2 for clear sky pixels and a harmonization function to align spectral responses with Sentinel-2. Monthly median composites were created for pre- and post-fire years, reducing noise and temporal mismatches. Gaps due to missing clear sky pixels (<0.04% of cases) were filled with the nearest monthly composite, flagged for quality. This dataset supports robust canopy change detection, aligning with NAIP manual labeling.
 
 
 
