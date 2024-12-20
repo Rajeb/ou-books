@@ -18,7 +18,15 @@ Dimensionality Reduction and Feature Selection: While hyperspectral data provide
 Future research should focus on refining data fusion techniques, enhancing model robustness across various environments, and improving automation in species classification workflows to address these gaps.
 
 
-
+8 band description
+----------------------------
+Our deep learning model uses satellite imagery from PlanetScope to detect canopy survival and mortality. PlanetScope by Planet Labs is a commercial constellation of 180+ CubeSat satellites collecting near- daily 4-band (RGB/NIR) imagery at 3-m spatial resolution. PlanetScope
+was chosen as the set of predictors because it often contains suffi- cient spatial resolution to observe individual forest canopies and its higher temporal frequency enables the exploitation of pre- and post- disturbance observations as well as intra-annual canopy variability.
+Within each fire of interest, we downloaded all PlanetScope imagery from May 1 to October 31 with <70% cloud cover, having a solar elevation ≥ 10◦, and meet ‘‘standard’’ quality according to Planet’s metadata (Roy et al., 2021). Images were masked using the Usable Data Mask 2 provided by Planet to select ‘‘clear sky’’ pixels. Because of
+4
+D.J. Dixon et al.
+Remote Sensing of Environment 298 (2023) 113842
+spectral inconsistencies between image dates and sensors, we applied a harmonization function provided by Planet to approximately match the Sentinel-2 spectral response for each image. Monthly median com- posites from May to October were calculated for a pre-fire year and a post-fire year defined by the year of the fire and the timing of each NAIP acquisition. This use of median composites minimizes the potential layover effects between PlanetScope images or undetected noise within single images. Pre-fire PlanetScope imagery were gathered for the first year before the fire year, and post-fire imagery for the first (3/15 fires) or second (12/15) year after the fire to temporally align with NAIP manual canopy labeling (S1 Table). Although rare, there were cases of zero clear sky pixels occurring over the course of an entire month; this occurred with 0.035% of pixels across all training, validation and test quadrants. For those cases, we used the subsequent or closest monthly composite for gap filling, and the final product includes a quality flag to note those cases. S2 and S3 Figures show density plots of image date counts, cases of zero image gaps, and the timing of image acquisitions used for each month and ecoregion.
 
 
 
