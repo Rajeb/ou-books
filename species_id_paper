@@ -39,7 +39,14 @@ match with ground data
 ---------------------------
 After segmenting the full study area, we matched the delineated tree crowns and our field measurements with the following algorithm: For each tree crown segment, we checked whether it contained any field data measurements. If there was only one field data point within a tree crown, then the tree crown was labeled with this field data point. If two or more measured trees were located inside one tree crown segment, then we used the following rules: If any of these field data points was individually measured, we only considered individually measured trees within the segmented crown as a valid label for the corresponding tree crown due to their higher spatial accuracy. Finally, the tree crown was labeled with the close
 
+paraphrase:
+----------------------
 
+After segmenting the study area, each tree crown was matched to field measurements as follows:
+
+If a tree crown contained only one field data point, it was labeled with that point.
+If multiple field data points were within a crown, individually measured trees were prioritized for labeling due to their higher spatial accuracy.
+The tree crown was labeled with the closest valid field data point.
 
 
 
