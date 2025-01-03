@@ -35,6 +35,13 @@ Imagery was pre-processed using Planet's Usable Data Mask 2 for clear sky pixels
 
 
 
+match with ground data
+---------------------------
+After segmenting the full study area, we matched the delineated tree crowns and our field measurements with the following algorithm: For each tree crown segment, we checked whether it contained any field data measurements. If there was only one field data point within a tree crown, then the tree crown was labeled with this field data point. If two or more measured trees were located inside one tree crown segment, then we used the following rules: If any of these field data points was individually measured, we only considered individually measured trees within the segmented crown as a valid label for the corresponding tree crown due to their higher spatial accuracy. Finally, the tree crown was labeled with the close
+
+
+
+
 
 
 Data Scale: Many studies have focused on small-scale datasets or individual sites, limiting the generalizability of models to broader landscapes. Although some models achieve high accuracy in controlled environments, they often fail when applied to larger, more heterogeneous regions due to variations in species composition, canopy structure, and environmental factors (MDPI, 2023). Expanding datasets to cover large, diverse geographical areas is essential for improving model robustness.
