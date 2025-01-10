@@ -112,3 +112,49 @@ For [Species A], Model 1 demonstrated the highest classification accuracy, with 
 Conversely, Model 3 showed balanced performance across all three species but had a slight tendency to overclassify [Species C] at the expense of [Species A]. 
 These results highlight Model 1’s strength in [Species A], Model 2’s reliability for [Species B], and Model 3’s overall consistency, albeit with some trade-offs in species-specific accuracy.
 
+Custom class
+Sensitivity (%)
+monterey_pines
+90
+jeffery_ponderosa_pines
+88.2
+gray_pines
+84.5
+eucalyptus trees
+82.3
+true redwoods
+79.2
+other_oaks
+74.1
+live_oaks
+70.1
+douglas firs
+66.6
+incense cedars
+66.6
+liquidambar trees
+63.1
+sugar_pines
+60.1
+black_oaks
+51.4
+umbellularia trees
+49.5
+walnuts
+44.3
+stonefruit oaks
+40.4
+fir trees
+37.8
+valley_oaks
+36.4
+poplars
+36.1
+arbutus trees
+22.4
+other
+10.9
+
+
+Mean across classes
+57.7
