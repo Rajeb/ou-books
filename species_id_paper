@@ -91,3 +91,11 @@ How accurate can deep learning architectures based on LiDAR data achieve when co
 How do classification accuracies compare between models using only LiDAR data, multispectral reflectance data, and a combination of both when evaluated against ground truth data?
 Are there certain tree species that perform better in classification than others, and do specific approaches (LiDAR-based, reflectance-based, or combined) yield superior results for certain species?
 This approach will contribute to refining wildfire risk management strategies by enhancing the accuracy of tree species identification and improving vegetation risk assessmen
+
+
+
+
+
+Results
+____________________
+
