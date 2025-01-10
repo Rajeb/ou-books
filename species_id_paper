@@ -99,3 +99,16 @@ This approach will contribute to refining wildfire risk management strategies by
 Results
 ____________________
 
+
+Overall, the three models demonstrated varying levels of performance across the 20 classified species, with notable differences in their ability to handle species-specific misclassifications. 
+Model 1 exhibited the highest overall accuracy but struggled with some underrepresented species, while Model 2 provided more balanced performance across species,
+and Model 3 achieved moderate accuracy with a focus on minimizing false positives.
+
+
+Here’s a template paragraph for comparing and contrasting model performances based on confusion matrix results for the three major tree species:
+
+The performance of the three models was evaluated using confusion matrices, focusing on classification accuracy for the three major tree species: [Species A], [Species B], and [Species C].
+For [Species A], Model 1 demonstrated the highest classification accuracy, with a notable reduction in misclassifications compared to Models 2 and 3. However, while Model 2 exhibited slightly lower accuracy for [Species A], it outperformed the other models in correctly identifying [Species B], where Model 1 struggled with higher confusion rates with [Species C]. 
+Conversely, Model 3 showed balanced performance across all three species but had a slight tendency to overclassify [Species C] at the expense of [Species A]. 
+These results highlight Model 1’s strength in [Species A], Model 2’s reliability for [Species B], and Model 3’s overall consistency, albeit with some trade-offs in species-specific accuracy.
+
