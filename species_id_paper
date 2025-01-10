@@ -118,3 +118,28 @@ The MM model exhibited strong sensitivity for a few species but showed uneven pe
 Monterey pines, Jeffery/Ponderosa pines, and gray pines demonstrated the highest sensitivity, with values of 90%, 88.2%, and 84.5%, respectively.
 Eucalyptus trees and true redwoods also ranked among the better-performing classes, achieving sensitivities above 79%. 
 In contrast, the model faced challenges with certain species, including arbutus trees (22.4%) and the "other" category (10.9%), where sensitivity was notably low. With a mean sensitivity of 57.7% across all classes, the model performed moderately overall but revealed significant disparities, particularly for less dominant or harder-to-classify species.
+
+Sat only model
+Custom class	Sensitivity (%)
+monterey_pines	93
+jeffery_ponderosa_pines	10
+gray_pines	52
+eucalyptus trees	72
+true redwoods	78
+other_oaks	24
+live_oaks	20
+douglas firs	13
+incense cedars	13
+liquidambar trees	37
+sugar_pines	42
+black_oaks	39
+umbellularia trees	35
+walnuts	18
+stonefruit oaks	6
+fir trees	22
+valley_oaks	52
+poplars	9
+arbutus trees	12
+other	7
+	
+Mean across classes	32.7
