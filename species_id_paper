@@ -151,3 +151,29 @@ The sensitivity results for the model demonstrate significant variation across t
 Monterey pines exhibited the highest sensitivity at 93%, representing a strong true positive rate for this species. In contrast, species such as Jeffery/Ponderosa pines (10%), stonefruit oaks (6%), and the "other" category (7%) had notably low sensitivity, indicating a high rate of false negatives. 
 Species like true redwoods (78%), eucalyptus trees (72%), and gray pines (52%) exhibited moderate sensitivity, suggesting a reasonable balance between true positives and false positives. The model’s mean sensitivity of 32.7% across all classes reflects a low overall performance, with high variability (heterogeneity) in the classification accuracy among different species. 
 The results suggest a potential model bias toward certain species, as evidenced by the lower sensitivity values for less represented or more complex species.
+
+
+
+##########
+custom_class_run1	univ_specie
+Abies: fir trees	White Fir, Grand Fir, Fir, True, Red Fir
+Arbutus: arbutus trees	Madrone
+Calocedrus: incense cedars	['Cedar']
+Eucalyptus: eucalyptus trees	['Eucalyptus, Blue Gum', 'Eucalyptus, Silver Dollar Gum', 'Eucalyptus, Red-flowering Gum', 'Eucalyptus, Red Ironbark', 'Eucalyptus, Coolibah', 'Eucalyptus, Manna Gum', 'Eucalyptus', 'Eucalyptus, Red Gum']
+Juglans: walnuts	['Walnut', 'Black Walnut', 'English Walnut']
+Liquidambar: liquidambar trees	['Liquidambar (Sweet Gum)']
+Lithocarpus: stonefruit oaks	['Tan Oak']
+Pseudotsuga: douglas firs	['Douglas Fir']
+Sequoia: true redwoods	['Redwood, Coast']
+Umbellularia: umbellularia trees	['Bay, Calif.']
+black_oaks	['Black Oak']
+gray_pines	['Gray Pine']
+jeffery_ponderosa_pines	['Ponderosa Pine', 'Jeffery Pine']
+live_oaks	['Coast Live Oak', 'Live Oak', 'Cork Oak', 'Interior Live Oak', 'Canyon Live Oak']
+monterey_pines	['Monterey Pine']
+other	['Box-Elder', 'Unknown', 'Ailanthus', 'Peach', 'Bishop Pine', 'Pistache', 'Cottonwood, Black', 'Aleppo Pine', 'Hickory', 'Chinese Elm', 'Cherry', 'Plum', 'Privet', 'Acacia', 'Elm', 'Canary Island Pine', 'Dawn Redwood', 'Almond', 'Monterey Cypress', 'Italian Stone Pine', 'Apricot', 'Mulberry', 'Italian Cypress', 'Albizzia', 'Honey Locust', 'Juniper', 'Brush', 'Locust, Black', 'Mimosa', 'Silver Maple', 'Pecan', 'Buckeye', 'Birch', 'Olive', 'Blackwood Acacia', 'Pepper Tree', 'Spruce', 'Apple', 'Knobcone Pine', 'Sequoia, Giant', 'Elm, American', 'Pear']
+other_oaks	['Oregon White Oak', 'Pin Oak', 'English Oak', 'Holly Oak', 'Blue Oak', 'Oracle Oak', 'Red Oak, Northern', 'Valley Oak']
+poplars	['Poplar', 'Lombardy Poplar']
+sugar_pines	['Sugar Pine']
+valley_oaks	['Valley Oak']
+
