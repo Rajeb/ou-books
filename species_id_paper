@@ -1,6 +1,10 @@
 Qian, C., Yao, C., Ma, H., Xu, J., & Wang, J. (2023). Tree species classification using airborne lidar data based on individual tree segmentation and shape fitting. Remote Sensing, 15(2), 406.
 Chen, C., Jing, L., Li, H., Tang, Y., & Chen, F. (2023). Individual Tree Species Identification Based on a Combination of Deep Learning and Traditional Features. Remote Sensing, 15(9), 2301.
 
+___________
+explain confusion matrix for Multi modal
+The sensitivity results for the model demonstrate significant variation across the 20 species, with marked discrepancies in classification performance (Table X). Monterey pines exhibited the highest sensitivity at 93%, representing a strong true positive rate for this species. In contrast, species such as Jeffery/Ponderosa pines (10%), stone fruit oaks (6%), and the "other" category (7%) had notably low sensitivity, indicating a high rate of false negatives. Species like true redwoods (78%), eucalyptus trees (72%), and gray pines (52%) exhibited moderate sensitivity, suggesting a reasonable balance between true positives and false positives. The model’s mean sensitivity of 32.7% across all classes reflects a low overall performance, with high variability (heterogeneity) in the classification accuracy among different species.
+
 
 Searched 3 sites
 Research on tree species identification at the species level has made significant progress using LiDAR, multispectral, and hyperspectral imagery. However, there are several notable research gaps:
