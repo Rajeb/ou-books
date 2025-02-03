@@ -1,3 +1,10 @@
+_________
+The ability of transformers to model long-range dependencies and efficiently integrate multiple modalities has facilitated breakthroughs in vision-language tasks and beyond. Notably, models like Flamingo (Alayrac et al., 2022) have demonstrated superior performance by jointly encoding visual and textual information. This success has motivated broader integration of modalities, including LiDAR and spectral data, fostering advancements in tasks such as remote sensing and environmental monitoring
+_________
+
+
+
+
 Qian, C., Yao, C., Ma, H., Xu, J., & Wang, J. (2023). Tree species classification using airborne lidar data based on individual tree segmentation and shape fitting. Remote Sensing, 15(2), 406.
 Chen, C., Jing, L., Li, H., Tang, Y., & Chen, F. (2023). Individual Tree Species Identification Based on a Combination of Deep Learning and Traditional Features. Remote Sensing, 15(9), 2301.
 
