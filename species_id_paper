@@ -8,6 +8,9 @@ Transformers' capacity to capture long-range dependencies and integrate multiple
 Accurate tree species mapping is crucial for wildfire mitigation, biodiversity conservation, and sustainable forest management under climate change. While remote sensing and deep learning have advanced species classification, challenges remain, including the low spatial resolution of satellite data, limited high-quality ground truth, and small study areas with low species diversity, constraining scalability and generalizati
 
 
+Accurate tree species mapping is crucial for wildfire mitigation, biodiversity conservation, and sustainable forest management under climate change. While remote sensing and deep learning have advanced species classification, challenges persist. Satellite data often lack the spatial resolution to distinguish species in heterogeneous landscapes. Additionally, limited high-quality ground truth and small study areas with low species diversity hinder scalability and generalization
+
+
 Qian, C., Yao, C., Ma, H., Xu, J., & Wang, J. (2023). Tree species classification using airborne lidar data based on individual tree segmentation and shape fitting. Remote Sensing, 15(2), 406.
 Chen, C., Jing, L., Li, H., Tang, Y., & Chen, F. (2023). Individual Tree Species Identification Based on a Combination of Deep Learning and Traditional Features. Remote Sensing, 15(9), 2301.
 
