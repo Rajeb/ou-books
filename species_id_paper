@@ -4,7 +4,8 @@ _________
 
 Transformers' capacity to capture long-range dependencies and integrate multiple modalities has driven significant progress in vision-language tasks and beyond. Models like Flamingo (Alayrac et al., 2022) excel by jointly encoding visual and textual data, inspiring the broader fusion of modalities such as LiDAR and spectral information, advancing applications in remote sensing and environmental monitoring
 
-
+--------------------
+Mapping tree species is essential for wildfire mitigation, biodiversity conservation, forest resilience, and sustainable forest management under the changing climate. Despite advancements in tree species classification driven by emerging remote sensing technologies and deep learning methods, several challenges persist in the utilization of data sources and the application of deep learning techniques. Low-resolution satellite data lack the spatial detail to resolve species in heterogeneous landscapes, and many studies are limited by scarce, high-quality ground truth data and small study areas with few species, limiting scalability and generalization to diverse ecosystems.
 
 
 Qian, C., Yao, C., Ma, H., Xu, J., & Wang, J. (2023). Tree species classification using airborne lidar data based on individual tree segmentation and shape fitting. Remote Sensing, 15(2), 406.
