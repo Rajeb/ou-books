@@ -1,4 +1,4 @@
-_________
+The recent advances in transformers architecture has allowed the transformers to model long-range dependencies and efficiently integrate multiple modalities such as CLIP has facilitated breakthroughs in vision-tasks and beyond \citealp[2021]{radford_learning_2021}, \citealp[2021]{dosovitskiy_image_2021}  Notably, models like Flamingo have demonstrated superior performance by jointly encoding visual and textual information\citealp[2022]{alayrac_flamingo_2022}. This success has motivated broader integration of modalities, including LiDAR and spectral data, fostering advancements in tasks such as remote sensing and environmental monitoring.
 The ability of transformers to model long-range dependencies and efficiently integrate multiple modalities has facilitated breakthroughs in vision-language tasks and beyond. Notably, models like Flamingo (Alayrac et al., 2022) have demonstrated superior performance by jointly encoding visual and textual information. This success has motivated broader integration of modalities, including LiDAR and spectral data, fostering advancements in tasks such as remote sensing and environmental monitoring
 _________
 
